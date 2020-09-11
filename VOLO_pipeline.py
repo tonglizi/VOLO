@@ -253,6 +253,7 @@ def main():
             PGM.prev_node_idx = PGM.curr_node_idx
 
             # 建图更新
+
             # Map.curr_ptcloud = curr_pts
             # Map.curr_se3 = PGM.curr_se3
             # Map.updateMap()
