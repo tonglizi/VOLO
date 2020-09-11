@@ -6,16 +6,18 @@ import random
 import torch
 from scipy.misc import imresize
 from path import Path
-from models import PoseExpNet
-from utils.InverseWarp import pose_vec2mat
 import argparse
 import numpy as np
 from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
 
+from modules.PointCloudMapping import MapManager
+
 np.set_printoptions(precision=4)
 
-from modules.ScanContextManager import *
+from models import PoseExpNet
+from utils.InverseWarp import pose_vec2mat
+
 from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
 
@@ -40,13 +42,12 @@ parser.add_argument('--num_icp_points', type=int, default=5000)  # 5000 is enoug
 parser.add_argument('--proposal', type=int, default=2)
 parser.add_argument('--tolerance', type=float, default=0.001)
 
+parser.add_argument('--scm_type', type=str, default='ring')
 parser.add_argument('--num_rings', type=int, default=20)  # same as the original paper
 parser.add_argument('--num_sectors', type=int, default=60)  # same as the original paper
 parser.add_argument('--num_candidates', type=int, default=10)  # must be int
 parser.add_argument('--try_gap_loop_detection', type=int, default=10)  # same as the original paper
-
-parser.add_argument('--loop_threshold', type=float,
-                    default=0.11)  # 0.11 is usually safe (for avoiding false loop closure)
+parser.add_argument('--loop_threshold', type=float, default=0.11)  # 0.11 for sc, 0.015 for expand
 
 parser.add_argument('--data_base_dir', type=str,
                     default='/your/path/.../data_odometry_velodyne/dataset/sequences')
@@ -56,11 +57,17 @@ parser.add_argument('--save_gap', type=int, default=300)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+args = parser.parse_args()
+if args.scm_type == "ring":
+    from modules.RingScanContextManager import *
+elif args.scm_type == "vertical":
+    from modules.VerticalScanContextManager import *
+elif args.scm_type == "combined":
+    from modules.CombinedScanContextManager import *
 
 
 @torch.no_grad()
 def main():
-    args = parser.parse_args()
     from utils.UtilsPoseEvaluationKitti import test_framework_KITTI as test_framework
 
     weights = torch.load(args.pretrained_posenet)
@@ -119,12 +126,16 @@ def main():
                              num_candidates=args.num_candidates,
                              threshold=args.loop_threshold)
 
+    # Map = MapManager()
+
     # for save the results as a video
     fig_idx = 1
     fig = plt.figure(fig_idx)
+    # fig_map = plt.figure(2)
     writer = FFMpegWriter(fps=15)
-    video_name = args.sequence_idx + "_" + str(args.num_icp_points) + "_prop@" + str(args.proposal) + "_tol@" + str(
-        args.tolerance) + ".mp4"
+    video_name = args.sequence_idx + "_" + str(args.num_icp_points) + "_prop@" + str(
+        args.proposal) + "_tolerance@" + str(
+        args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(args.loop_threshold) + ".mp4"
     num_frames_to_skip_to_show = 5
     num_frames_to_save = np.floor(num_frames / num_frames_to_skip_to_show)
     with writer.saving(fig, video_name, num_frames_to_save):  # this video saving part is optional
@@ -164,53 +175,50 @@ def main():
             tr_vectors = -rot_matrices @ inv_transform_matrices[:, :, -1:]
 
             transform_matrices = np.concatenate([rot_matrices, tr_vectors], axis=-1)
-            print('**********DeepVO result: time_cost {:.3} s'.format(timeCostVO / (len(imgs) - 1)))
-            # print(transform_matrices)
+            # print('**********DeepVO result: time_cost {:.3} s'.format(timeCostVO / (len(imgs) - 1)))
             # 将对[0 1 2]中间1的转换矩阵变成对0的位姿转换
             first_inv_transform = inv_transform_matrices[0]
             final_poses = first_inv_transform[:, :3] @ transform_matrices
             final_poses[:, :, -1:] += first_inv_transform[:, -1:]
-            # print('first')
-            # print(first_inv_transform)
-            print('poses')
-            print(final_poses)
+            # print('poses')
+            # print(final_poses)
 
             # cur_VO_pose取final poses的第2项，则是取T10,T21,T32。。。
             cur_VO_pose = np.identity(4)
             cur_VO_pose[:3, :] = final_poses[1]
-            print("对齐前未有尺度修正的帧间位姿")
-            print(cur_VO_pose)
-
-            print("last_pose")
-            print(last_pose)
-            print("last_VO_pose")
-            print(last_VO_pose)
+            # print("对齐前未有尺度修正的帧间位姿")
+            # print(cur_VO_pose)
+            #
+            # print("last_pose")
+            # print(last_pose)
+            # print("last_VO_pose")
+            # print(last_VO_pose)
 
             # 尺度因子的确定：采用上一帧的LO输出位姿和VO输出位姿的尺度比值作为当前帧的尺度因子，初始尺度为1
             if j == 0:
                 scale_factor = 7
             else:
                 scale_factor = math.sqrt(np.sum(last_pose[:3, -1] ** 2) / np.sum(last_VO_pose[:3, -1] ** 2))
-                print("分子", np.sum(last_pose[:3, -1] ** 2))
-                print("分母", np.sum(last_VO_pose[:3, -1] ** 2))
+                # print("分子", np.sum(last_pose[:3, -1] ** 2))
+                # print("分母", np.sum(last_VO_pose[:3, -1] ** 2))
             last_VO_pose = copy.deepcopy(cur_VO_pose)  # 注意深拷贝
-            print("尺度因子：", scale_factor)
+            # print("尺度因子：", scale_factor)
 
             # 先尺度修正，再对齐
             cur_VO_pose[:3, -1:] = cur_VO_pose[:3, -1:] * scale_factor
-            print("尺度修正后...")
-            print(cur_VO_pose)
+            # print("尺度修正后...")
+            # print(cur_VO_pose)
             cur_VO_pose = Transform_matrix_C2L @ cur_VO_pose @ np.linalg.inv(Transform_matrix_C2L)
 
-            print("对齐到雷达坐标系帧间位姿")
-            print(cur_VO_pose)
+            # print("对齐到雷达坐标系帧间位姿")
+            # print(cur_VO_pose)
 
             '''*************************LO部分******************************************'''
             # 为了和VO对应，LO
             if j == 0:
-                last_pts = random_sampling(pointClouds[j], 5000)
+                last_pts = random_sampling(pointClouds[j], args.num_icp_points)
                 SCM.addNode(j, last_pts)
-            curr_pts = random_sampling(pointClouds[j + 1], 5000)
+            curr_pts = random_sampling(pointClouds[j + 1], args.num_icp_points)
 
             from modules.ICP import icp
 
@@ -235,7 +243,7 @@ def main():
 
             print("LO优化后的位姿,mean_dis: ", np.asarray(distacnces).mean())
             print(odom_transform)
-            print("LO迭代次数：", iterations)
+            # print("LO迭代次数：", iterations)
             SCM.addNode(PGM.curr_node_idx, curr_pts)
             # 记录当前Key值和未优化位姿
             PGM.curr_node_idx = j + 1
@@ -243,6 +251,11 @@ def main():
             # 将当前里程计因子加入因子图
             PGM.addOdometryFactor(odom_transform)
             PGM.prev_node_idx = PGM.curr_node_idx
+
+            # 建图更新
+            # Map.curr_ptcloud = curr_pts
+            # Map.curr_se3 = PGM.curr_se3
+            # Map.updateMap()
 
             # loop detection and optimize the graph
             if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
@@ -255,7 +268,7 @@ def main():
                     # 2-1/ add the loop factor
                     loop_scan_down_pts = SCM.getPtcloud(loop_idx)
                     loop_transform, _, _ = icp(curr_pts, loop_scan_down_pts,
-                                                   init_pose=yawdeg2se3(yaw_diff_deg), max_iterations=20)
+                                               init_pose=yawdeg2se3(yaw_diff_deg), max_iterations=20)
                     PGM.addLoopFactor(loop_transform, loop_idx)
 
                     # 2-2/ graph optimization
@@ -269,6 +282,8 @@ def main():
             if (j % num_frames_to_skip_to_show == 0):
                 ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
                 writer.grab_frame()
+            # if (j % 50 == 0):
+            #     Map.vizMap(fig_idx=2)
 
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
@@ -329,10 +344,6 @@ def compute_LO_pose_error(gt, odom_transform, Transform_matrix_L2C=None):
     gt_pose = gt[1]
     odom_transform_L2C = Transform_matrix_L2C @ odom_transform @ np.linalg.inv(Transform_matrix_L2C)
 
-    print("111111111111")
-    print(gt_pose)
-    print("22222222222222222222")
-    print(odom_transform_L2C)
     ATE = np.linalg.norm((gt_pose[:3, -1] - odom_transform_L2C[:3, -1]).reshape(-1))
 
     # Residual matrix to which we compute angle's sin and cos
@@ -350,7 +361,7 @@ def compute_pose_error(gt, pred):
     RE = 0
     snippet_length = gt.shape[0]
     scale_factor = np.sum(gt[:, :, -1] * pred[:, :, -1]) / np.sum(pred[:, :, -1] ** 2)
-    print("scale_factor: %s", scale_factor)
+    # print("scale_factor: %s", scale_factor)
     ATE = np.linalg.norm((gt[:, :, -1] - scale_factor * pred[:, :, -1]).reshape(-1))
     for gt_pose, pred_pose in zip(gt, pred):
         # Residual matrix to which we compute angle's sin and cos

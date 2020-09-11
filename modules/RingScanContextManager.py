@@ -169,4 +169,5 @@ class ScanContextManager:
                 nn_yawdiff_deg = nn_yawdiff * (360/self.shape[1])
                 return nn_idx, nn_dist, nn_yawdiff_deg # loop detected!
             else:
-                return None, None, None
+                nn_yawdiff_deg = nn_yawdiff * (360 / self.shape[1])
+                return None, nn_dist, nn_yawdiff_deg
