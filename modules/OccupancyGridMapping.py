@@ -14,7 +14,7 @@ def inverseSensorModel(i, j, grid_length, xt, zt):
     grid_center_x = float(i + 0.5) * grid_length
     grid_center_y = float(j + 0.5) * grid_length
     r = np.sqrt((xt[0] - grid_center_x) ** 2 + (xt[1] - grid_center_y) ** 2)
-    k =
+
 
 
 def occupancyGridMapping(map, xt, zt):

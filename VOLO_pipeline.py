@@ -11,7 +11,7 @@ import numpy as np
 from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
 
-from modules.PointCloudMapping import MapManager
+from modules.PointCloudMapping import MappingManager
 
 np.set_printoptions(precision=4)
 
@@ -127,7 +127,7 @@ def main():
                              num_candidates=args.num_candidates,
                              threshold=args.loop_threshold)
     if args.mapping:
-        Map = MapManager()
+        Map = MappingManager()
 
     # for save the results as a video
     fig_idx = 1
@@ -218,6 +218,10 @@ def main():
             if j == 0:
                 last_pts = random_sampling(pointClouds[j], args.num_icp_points)
                 SCM.addNode(j, last_pts)
+                Map.curr_se3=PGM.curr_se3
+                Map.curr_local_ptcloud=last_pts
+                Map.updateMap()
+
             curr_pts = random_sampling(pointClouds[j + 1], args.num_icp_points)
 
             from modules.ICP import icp
@@ -254,7 +258,7 @@ def main():
 
             # 建图更新
             if args.mapping:
-                Map.curr_ptcloud = curr_pts
+                Map.curr_local_ptcloud = curr_pts
                 Map.curr_se3 = PGM.curr_se3
                 Map.updateMap()
 
@@ -278,6 +282,9 @@ def main():
                     # 2-2/ save optimized poses
                     ResultSaver.saveOptimizedPoseGraphResult(PGM.curr_node_idx, PGM.graph_optimized)
 
+                    # 2-3/ updateMap
+                    Map.optimizeGlobalMap(PGM.graph_optimized, PGM.curr_node_idx)
+
             # save the ICP odometry pose result (no loop closure)
             ResultSaver.saveUnoptimizedPoseGraphResult(PGM.curr_se3, PGM.curr_node_idx)
             if (j % num_frames_to_skip_to_show == 0):
@@ -295,6 +302,8 @@ def main():
 
             optimized_ATE, optimized_RE = compute_LO_pose_error(sample['poses'], odom_transform, Transform_matrix_L2C)
             optimized_errors[j] = optimized_ATE, optimized_RE
+        if args.mapping:
+            Map.saveMap2File('map_'+args.sequence_idx+'.pcd')
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)
