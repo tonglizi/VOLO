@@ -161,8 +161,8 @@ class ScanContextManager:
         vertical_sc = ptcloud2vsc(ptcloud, self.shape, self.max_height, self.min_height, self.max_dist)
         # 归一化,sc存的是高度值，exp存的是深度值,需要归一化处理
         #vertical_sc = 4 * vertical_sc / np.median(vertical_sc)
-        from matplotlib import pyplot as plt
-        plt.imshow(vertical_sc)
+        # from matplotlib import pyplot as plt
+        # plt.imshow(vertical_sc)
         key = vsc2key(vertical_sc)
 
         self.curr_node_idx = node_idx

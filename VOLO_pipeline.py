@@ -54,6 +54,7 @@ parser.add_argument('--data_base_dir', type=str,
 parser.add_argument('--sequence_idx', type=str, default='09')
 
 parser.add_argument('--save_gap', type=int, default=300)
+parser.add_argument('--mapping', type=bool, default=False)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -125,13 +126,12 @@ def main():
     SCM = ScanContextManager(shape=[args.num_rings, args.num_sectors],
                              num_candidates=args.num_candidates,
                              threshold=args.loop_threshold)
-
-    # Map = MapManager()
+    if args.mapping:
+        Map = MapManager()
 
     # for save the results as a video
     fig_idx = 1
     fig = plt.figure(fig_idx)
-    # fig_map = plt.figure(2)
     writer = FFMpegWriter(fps=15)
     video_name = args.sequence_idx + "_" + str(args.num_icp_points) + "_prop@" + str(
         args.proposal) + "_tolerance@" + str(
@@ -253,10 +253,10 @@ def main():
             PGM.prev_node_idx = PGM.curr_node_idx
 
             # 建图更新
-
-            # Map.curr_ptcloud = curr_pts
-            # Map.curr_se3 = PGM.curr_se3
-            # Map.updateMap()
+            if args.mapping:
+                Map.curr_ptcloud = curr_pts
+                Map.curr_se3 = PGM.curr_se3
+                Map.updateMap()
 
             # loop detection and optimize the graph
             if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
@@ -283,8 +283,8 @@ def main():
             if (j % num_frames_to_skip_to_show == 0):
                 ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
                 writer.grab_frame()
-            # if (j % 50 == 0):
-            #     Map.vizMap(fig_idx=2)
+            if args.mapping:
+                Map.vizMapWithOpen3D()
 
             if args.output_dir is not None:
                 predictions_array[j] = final_poses

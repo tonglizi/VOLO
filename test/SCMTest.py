@@ -4,13 +4,12 @@
 # @File : SCMTest.py
 # @Description: 测试Scan context回环检测
 import sys
-
 sys.path.append('..')
 import argparse
 import os
 from tqdm import tqdm
 
-from modules.VerticalScanContextManager import *
+from modules.ScanContext2Manager import *
 import utils.UtilsPointcloud as Ptutils
 
 parser = argparse.ArgumentParser()
@@ -41,16 +40,16 @@ def SCM_test():
     dists = []
     yaw_diff_degs = []
     print("starting...")
-    for i, scan_path in enumerate(tqdm(scan_paths, total=len(scan_paths))):
+    for i, scan_path in tqdm(enumerate(scan_paths), total=len(scan_paths)):
         # print('Running:{}...'.format(i))
         curr_scan_pts = Ptutils.readScan(scan_path)
         curr_scan_down_pts = Ptutils.random_sampling(curr_scan_pts, num_downsample_points)
         # add current node
         SCM.addNode(i, curr_scan_down_pts)
 
-        if i > 30 and i % 10 == 0:
+        if i > 30:
             loop_idx, loop_dist, yaw_diff_deg = SCM.detectLoop()
-            # print("loop_dist:", loop_dist)
+            #print("loop_dist:", loop_dist)
             dists.append(loop_dist)
             yaw_diff_degs.append(yaw_diff_deg)
 
@@ -59,10 +58,10 @@ def SCM_test():
             else:
                 print("Loop detected at frame : ", loop_idx)
 
-            # print("mean dis:", np.mean(dists))
-            # print("std dis:", np.std(dists))
-            # print("mean yaw:", np.mean(yaw_diff_degs))
-            # print("std yaw:", np.std(yaw_diff_degs))
+    print("mean dis:", np.mean(dists))
+    print("std dis:", np.std(dists))
+    print("mean yaw:", np.mean(yaw_diff_degs))
+    print("std yaw:", np.std(yaw_diff_degs))
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@
 # @File : PointCloudMapping.py
 import random
 import numpy as np
-import matplotlib.pyplot as plt
+import open3d as o3d
 
 
 def random_sampling(orig_points, num_points):
@@ -17,12 +17,17 @@ def random_sampling(orig_points, num_points):
 
 
 class MapManager:
-    def __init__(self,fig_idx=2):
+    def __init__(self):
         self.curr_ptcloud_map = None
         self.curr_ptcloud = None
         self.curr_se3 = np.identity(4)
-        self.fig_idx=fig_idx
-        self.fig=plt.figure(self.fig_idx)
+        self.pointcloud = o3d.geometry.PointCloud()
+        self.viz = o3d.visualization.Visualizer()
+        self.viz.create_window()
+        self.viz.get_render_option().point_size = 2.0
+        self.viz.get_render_option().point_color_option = o3d.PointColorOption.XCoordinate
+        self.viz.add_geometry(self.pointcloud)
+        self.viz.add_geometry(o3d.create_mesh_coordinate_frame(size=10, origin=[0., 0., 0.]))
 
     def updateMap(self, down_points=100):
         # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
@@ -37,13 +42,21 @@ class MapManager:
         else:
             self.curr_ptcloud_map = np.concatenate([self.curr_ptcloud_map, sub_ptcloud_map.T[:, :3]])
 
+    def vizMapWithOpen3D(self):
+        self.pointcloud.points = o3d.utility.Vector3dVector(self.curr_ptcloud_map)
+        self.viz.update_geometry()
+        self.viz.poll_events()
+        self.viz.update_renderer()
+
+    # use matplotlib to display 3d ptcloud, low efficiency
     def vizMap(self, fig_idx=None):
+        import matplotlib.pyplot as plt
         x = self.curr_ptcloud_map[:, 0]
         y = self.curr_ptcloud_map[:, 1]
         z = self.curr_ptcloud_map[:, 2]
-        #fig = plt.figure(fig_idx)
+        fig = plt.figure(fig_idx)
         plt.clf()
-        ax = self.fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection='3d')
         plt.title("CurrentMap")
         color = np.sqrt(x ** 2 + y ** 2 + z ** 2)
         ax.scatter(-y, x, z, c=y, marker='.', s=2, linewidth=0, alpha=1, cmap='summer')
@@ -53,15 +66,16 @@ class MapManager:
         plt.draw()
         plt.pause(0.01)
 
-
 # # ******test script*******
 # curr_se3 = np.identity(4)
 # curr_se3[:3, -1] = [1, 1, 0]
 # map = MapManager()
 # map.curr_se3 = curr_se3
-# for i in range(10):
-#     map.curr_ptcloud = np.random.random((1000, 3))
+# points = np.random.random((1000,3))
+# while True:
+#     points -= 0.001
+#     map.curr_ptcloud = points
 #     map.updateMap()
-#     map.vizMap(1)
+#     # map.vizMap(1)
+#     map.vizMapWithOpen3D()
 # print(map.curr_ptcloud_map)
-
