@@ -131,4 +131,6 @@ dmypy.json
 .idea/
 *.mp4
 *.out
-checkpoints
+checkpoints/
+result/
+/result/
