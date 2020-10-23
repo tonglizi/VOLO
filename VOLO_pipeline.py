@@ -92,7 +92,7 @@ def main():
         predictions_array = np.zeros((len(framework), seq_length, 3, 4))
         abs_VO_poses = np.zeros((len(framework), 12))
         #位姿估计值，针对于图像坐标系下，和真值直接比较
-        est_poses=np.zeros(len(framework),12)
+        est_poses=np.zeros((len(framework),12))
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
 
     abs_VO_pose = np.identity(4)
