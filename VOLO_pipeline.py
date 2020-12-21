@@ -31,7 +31,7 @@ parser.add_argument("--no-resize", action='store_true', help="no resizing is don
 parser.add_argument("--min-depth", default=1e-3)
 parser.add_argument("--max-depth", default=80)
 
-parser.add_argument("--dataset-dir", default='.', type=str, help="Dataset directory")
+parser.add_argument("--dataset-dir",default='.', type=str, help="Dataset directory")
 parser.add_argument("--sequences", default=['09'], type=str, nargs='*', help="sequences to test")
 parser.add_argument("--output-dir", default=None, type=str,
                     help="Output directory for saving predictions in a big 3D numpy file")
@@ -56,7 +56,7 @@ parser.add_argument('--sequence_idx', type=str, default='09')
 parser.add_argument('--save_gap', type=int, default=300)
 parser.add_argument('--mapping', type=bool, default=False)
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 args = parser.parse_args()
 if args.scm_type == "ring":
