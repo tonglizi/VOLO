@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time : 2020/8/27 23:13
 # @Author : CaiXin
-# @File : VOLO_pipeline.py
+# @File : VOLO_pipeline_kitti.py
 import random
 import torch
 from scipy.misc import imresize
