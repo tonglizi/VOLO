@@ -4,7 +4,6 @@
 # @File : VOLO_pipeline_kitti.py
 import random
 import torch
-from scipy.misc import imresize
 from path import Path
 import argparse
 import numpy as np
@@ -150,10 +149,9 @@ def main():
             '''
             imgs = sample['imgs']
 
-            h, w, _ = imgs[0].shape
+            w, h = imgs[0].size
             if (not args.no_resize) and (h != args.img_height or w != args.img_width):
-                imgs = [imresize(img, (args.img_height, args.img_width)).astype(np.float32) for img in imgs]
-
+                imgs = [(np.array(img.resize(( args.img_width,args.img_height)))).astype(np.float32) for img in imgs]
             imgs = [np.transpose(img, (2, 0, 1)) for img in imgs]
 
             ref_imgs = []
@@ -293,7 +291,7 @@ def main():
             # save the ICP odometry pose result (no loop closure)
             ResultSaver.saveUnoptimizedPoseGraphResult(PGM.curr_se3, PGM.curr_node_idx)
             if (j % num_frames_to_skip_to_show == 0):
-                ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
+                # ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
                 writer.grab_frame()
             if args.mapping is True:
                 Map.vizMapWithOpen3D()

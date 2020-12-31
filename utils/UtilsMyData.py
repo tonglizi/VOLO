@@ -3,7 +3,7 @@
 import numpy as np
 # import pandas as pd
 from path import Path
-from scipy.misc import imread
+from PIL import Image
 from tqdm import tqdm
 
 
@@ -15,7 +15,7 @@ class test_framework_MyData(object):
     def generator(self):
         for img_list, sample_list in zip(self.img_files, self.sample_indices):
             for snippet_indices in sample_list:
-                imgs = [imread(img_list[i]).astype(np.float32) for i in snippet_indices]
+                imgs = [Image.open(img_list[i]) for i in snippet_indices]
 
                 yield {'imgs': imgs,
                        'path': img_list[0],

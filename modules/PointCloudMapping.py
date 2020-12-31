@@ -23,7 +23,7 @@ def showPointcloudFromFile(filename=None):
         print("No file input...")
     else:
         pointcloud = o3d.io.read_point_cloud(filename)
-        o3d.draw_geometries([pointcloud], window_name='Map_' + filename)
+        o3d.visualization.draw_geometries([pointcloud], window_name='Map_' + filename)
 
 
 class MappingManager:
@@ -38,9 +38,9 @@ class MappingManager:
         self.viz = o3d.visualization.Visualizer()
         self.viz.create_window()
         self.viz.get_render_option().point_size = 2.0
-        self.viz.get_render_option().point_color_option = o3d.PointColorOption.XCoordinate
+        self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
         self.viz.add_geometry(self.pointcloud)
-        self.viz.add_geometry(o3d.create_mesh_coordinate_frame(size=400, origin=[0., 0., 0.]))
+        self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
 
     def updateMap(self, down_points=100):
         # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
@@ -79,7 +79,7 @@ class MappingManager:
     def vizMapWithOpen3D(self):
         if self.global_ptcloud is not None:
             self.pointcloud.points = o3d.utility.Vector3dVector(self.global_ptcloud)
-            self.viz.update_geometry()
+            self.viz.update_geometry(self.pointcloud)
             self.viz.poll_events()
             self.viz.update_renderer()
 
@@ -120,4 +120,4 @@ class MappingManager:
 #     # map.vizMap(1)
 #     map.vizMapWithOpen3D()
 # map.saveMap2File("map.pcd")
-# showPointcloudFromFile("map.pcd")
+showPointcloudFromFile("map_20201220_846.pcd")

@@ -4,7 +4,6 @@
 # @File : VOLO_pipeline_kitti.py
 import random
 import torch
-from scipy.misc import imresize
 from path import Path
 import argparse
 import numpy as np
@@ -150,9 +149,9 @@ def main():
             '''
             imgs = sample['imgs']
 
-            h, w, _ = imgs[0].shape
+            w,h = imgs[0].size
             if (not args.no_resize) and (h != args.img_height or w != args.img_width):
-                imgs = [imresize(img, (args.img_height, args.img_width)).astype(np.float32) for img in imgs]
+                imgs = [(np.array(img.resize(( args.img_width,args.img_height)))).astype(np.float32) for img in imgs]
 
             imgs = [np.transpose(img, (2, 0, 1)) for img in imgs]
 
