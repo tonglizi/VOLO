@@ -92,6 +92,8 @@ def main():
         '''绝对位姿列表初始化'''
         # 对齐到雷达坐标系，VO模型输出的带有尺度的绝对位姿
         abs_VO_poses = np.zeros((len(framework), 12))
+        # 对齐到雷达坐标系，LO模型输出的带有尺度的绝对位姿
+        abs_LO_poses=np.zeros((len(framework),12))
         #位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
         est_poses=np.zeros((len(framework),12))
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
@@ -99,6 +101,8 @@ def main():
         '''帧间位姿列表初始化'''
         # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
         cur_VO_poses = np.zeros((len(framework), 12))
+        # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
+        cur_LO_poses = np.zeros((len(framework), 12))
 
         '''尺度因子'''
         scale_factors=np.zeros((len(framework), 1))
@@ -315,7 +319,9 @@ def main():
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
                 cur_VO_poses[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
+                cur_LO_poses[j]=odom_transform[:3,:].reshape(-1,12)[0]
                 abs_VO_poses[j] = abs_VO_pose[:3, :].reshape(-1, 12)[0]
+                abs_LO_poses[j] = PGM.curr_se3[:3,:].reshape(-1,12)[0]
                 est_pose=Transform_matrix_L2C @ PGM.curr_se3 @ np.linalg.inv(Transform_matrix_L2C)
                 est_poses[j+1]=est_pose[:3,:].reshape(-1,12)[0]
 
