@@ -24,14 +24,13 @@ parser = argparse.ArgumentParser(
     description='Script for PoseNet testing with corresponding groundTruth from KITTI Odometry',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("pretrained_posenet", type=str, help="pretrained PoseNet path")
-parser.add_argument("--img-height", default=128, type=int, help="Image height")
-parser.add_argument("--img-width", default=416, type=int, help="Image width")
+parser.add_argument("--img-height", default=341, type=int, help="Image height")
+parser.add_argument("--img-width", default=427, type=int, help="Image width")
 parser.add_argument("--no-resize", action='store_true', help="no resizing is done")
 parser.add_argument("--min-depth", default=1e-3)
 parser.add_argument("--max-depth", default=80)
 
 parser.add_argument("--dataset-dir",default='.', type=str, help="Dataset directory")
-parser.add_argument("--sequences", default=['09'], type=str, nargs='*', help="sequences to test")
 parser.add_argument("--output-dir", default=None, type=str,
                     help="Output directory for saving predictions in a big 3D numpy file")
 parser.add_argument("--img-exts", default=['png', 'jpg', 'bmp'], nargs='*', type=str, help="images extensions to glob")
@@ -53,7 +52,7 @@ parser.add_argument('--data_base_dir', type=str,
 parser.add_argument('--sequence_idx', type=str, default='09')
 
 parser.add_argument('--save_gap', type=int, default=300)
-parser.add_argument('--mapping', type=bool, default=False)
+parser.add_argument('--mapping', type=bool, default=False,help="display built real-time map")
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -291,7 +290,7 @@ def main():
             # save the ICP odometry pose result (no loop closure)
             ResultSaver.saveUnoptimizedPoseGraphResult(PGM.curr_se3, PGM.curr_node_idx)
             if (j % num_frames_to_skip_to_show == 0):
-                # ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
+                ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
                 writer.grab_frame()
             if args.mapping is True:
                 Map.vizMapWithOpen3D()
