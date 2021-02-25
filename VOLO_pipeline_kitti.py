@@ -100,10 +100,10 @@ def main():
 
     # L和C的转换矩阵,对齐输入位姿到雷达坐标系
     Transform_matrix_L2C = np.identity(4)
-    Transform_matrix_L2C[:3, :3] = np.array([[7.533745e-03, -9.999714e-01, -6.166020e-04],
-                                             [1.480249e-02, 7.280733e-04, -9.998902e-01],
-                                             [9.998621e-01, 7.523790e-03, 1.480755e-02]])
-    Transform_matrix_L2C[:3, -1:] = np.array([-4.069766e-03, -7.631618e-02, -2.717806e-01]).reshape(3, 1)
+    Transform_matrix_L2C[:3, :3] = np.array([[-1.51482698e-02, -9.99886648e-01,  5.36310553e-03],
+                                             [-4.65337018e-03, -5.36307196e-03, -9.99969412e-01],
+                                             [9.99870070e-01, -1.56647995e-02, -4.48880010e-03]])
+    Transform_matrix_L2C[:3, -1:] = np.array([4.29029924e-03, -6.08539196e-02, -9.20346161e-02]).reshape(3, 1)
 
     Transform_matrix_C2L = np.linalg.inv(Transform_matrix_L2C)
 
