@@ -88,8 +88,9 @@ def main():
         output_dir = Path(args.output_dir)
         output_dir.makedirs_p()
         predictions_array = np.zeros((len(framework), seq_length, 3, 4))
+        # 对齐到雷达坐标系，VO模型输出的带有尺度的绝对位姿
         abs_VO_poses = np.zeros((len(framework), 12))
-        #位姿估计值，针对于图像坐标系下，和真值直接比较
+        #位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
         est_poses=np.zeros((len(framework),12))
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
 
@@ -296,6 +297,10 @@ def main():
             if args.mapping is True:
                 Map.vizMapWithOpen3D()
 
+            # 对齐到雷达坐标系下，VO输出的绝对位姿
+            abs_VO_pose[:, :3] = cur_VO_pose[:3, :3] @ abs_VO_pose[:, :3]
+            abs_VO_pose[:, -1:] += cur_VO_pose[:3, -1:]
+
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
                 abs_VO_poses[j] = abs_VO_pose[:3, :].reshape(-1, 12)[0]
@@ -351,7 +356,7 @@ def main():
         print("std \t {:10.4f}".format(std_iter_time))
 
         if args.output_dir is not None:
-            np.save(output_dir / 'predictions.npy', predictions_array)
+            #np.save(output_dir / 'predictions.npy', predictions_array)
             np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
             np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)
 
