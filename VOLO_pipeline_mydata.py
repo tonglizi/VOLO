@@ -104,7 +104,7 @@ def main():
         scale_factors=np.zeros((len(framework), 1))
 
 
-    abs_VO_pose = np.identity(4)
+    abs_VO_pose = np.identity(4)[:3,:]
     last_pose = np.identity(4)
     last_VO_pose = np.identity(4)
 
@@ -369,6 +369,7 @@ def main():
 
         if args.output_dir is not None:
             #np.save(output_dir / 'predictions.npy', predictions_array)
+            np.savetxt(output_dir / 'scale_factors.txt', scale_factors)
             np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
             np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
             np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)

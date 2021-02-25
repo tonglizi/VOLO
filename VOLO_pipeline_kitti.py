@@ -94,7 +94,7 @@ def main():
         est_poses=np.zeros((len(framework),12))
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
 
-    abs_VO_pose = np.identity(4)
+    abs_VO_pose = np.identity(4)[:3,:]
     last_pose = np.identity(4)
     last_VO_pose = np.identity(4)
 
