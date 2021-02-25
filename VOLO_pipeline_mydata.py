@@ -378,6 +378,8 @@ def main():
             np.savetxt(output_dir / 'scale_factors.txt', scale_factors)
             np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
             np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
+            np.savetxt(output_dir / 'cur_LO_poses.txt', cur_LO_poses)
+            np.savetxt(output_dir / 'abs_LO_poses.txt', abs_LO_poses)
             np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)
 
 
