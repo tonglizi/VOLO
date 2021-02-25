@@ -88,11 +88,21 @@ def main():
         output_dir = Path(args.output_dir)
         output_dir.makedirs_p()
         predictions_array = np.zeros((len(framework), seq_length, 3, 4))
+
+        '''绝对位姿列表初始化'''
         # 对齐到雷达坐标系，VO模型输出的带有尺度的绝对位姿
         abs_VO_poses = np.zeros((len(framework), 12))
         #位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
         est_poses=np.zeros((len(framework),12))
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
+
+        '''帧间位姿列表初始化'''
+        # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
+        cur_VO_poses = np.zeros((len(framework), 12))
+
+        '''尺度因子'''
+        scale_factors=np.zeros((len(framework), 1))
+
 
     abs_VO_pose = np.identity(4)
     last_pose = np.identity(4)
@@ -201,6 +211,7 @@ def main():
                 scale_factor = 7
             else:
                 scale_factor = math.sqrt(np.sum(last_pose[:3, -1] ** 2) / np.sum(last_VO_pose[:3, -1] ** 2))
+            scale_factors[j]=scale_factor
                 # print("分子", np.sum(last_pose[:3, -1] ** 2))
                 # print("分母", np.sum(last_VO_pose[:3, -1] ** 2))
             last_VO_pose = copy.deepcopy(cur_VO_pose)  # 注意深拷贝
@@ -303,6 +314,7 @@ def main():
 
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
+                cur_VO_poses[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
                 abs_VO_poses[j] = abs_VO_pose[:3, :].reshape(-1, 12)[0]
                 est_pose=Transform_matrix_L2C @ PGM.curr_se3 @ np.linalg.inv(Transform_matrix_L2C)
                 est_poses[j+1]=est_pose[:3,:].reshape(-1,12)[0]
@@ -357,6 +369,7 @@ def main():
 
         if args.output_dir is not None:
             #np.save(output_dir / 'predictions.npy', predictions_array)
+            np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
             np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
             np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)
 
