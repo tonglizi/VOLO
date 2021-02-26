@@ -99,6 +99,8 @@ def main():
         est_poses[0]=np.identity(4)[:3,:].reshape(-1,12)[0]
 
         '''帧间位姿列表初始化'''
+        # 对齐到相机坐标系，VO模型输出的带有尺度的帧间位姿
+        cur_VO_poses_C = np.zeros((len(framework), 12))
         # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
         cur_VO_poses = np.zeros((len(framework), 12))
         # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
@@ -223,6 +225,7 @@ def main():
 
             # 先尺度修正，再对齐
             cur_VO_pose[:3, -1:] = cur_VO_pose[:3, -1:] * scale_factor
+            cur_VO_poses_C[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
             # print("尺度修正后...")
             # print(cur_VO_pose)
             cur_VO_pose = Transform_matrix_C2L @ cur_VO_pose @ np.linalg.inv(Transform_matrix_C2L)
@@ -245,7 +248,7 @@ def main():
             from modules.ICP import icp
 
             # 选择LO的初值预估，分别是无预估，上一帧位姿，VO位姿
-            if args.proposal == 0:
+            if args.proposal ==  0:
                 init_pose = None
             elif args.proposal == 1:
                 init_pose = last_pose
@@ -376,6 +379,7 @@ def main():
         if args.output_dir is not None:
             #np.save(output_dir / 'predictions.npy', predictions_array)
             np.savetxt(output_dir / 'scale_factors.txt', scale_factors)
+            np.savetxt(output_dir / 'cur_VO_poses_C.txt', cur_VO_poses_C)
             np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
             np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
             np.savetxt(output_dir / 'cur_LO_poses.txt', cur_LO_poses)
