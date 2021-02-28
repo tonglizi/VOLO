@@ -321,7 +321,7 @@ def main():
 
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
-                cur_VO_poses[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
+                #cur_VO_poses[j]=cur_VO_pose[:3, :].reshape(-1, 12)[0]
                 cur_LO_poses[j]=odom_transform[:3,:].reshape(-1,12)[0]
                 abs_VO_poses[j] = abs_VO_pose[:3, :].reshape(-1, 12)[0]
                 abs_LO_poses[j] = PGM.curr_se3[:3,:].reshape(-1,12)[0]
