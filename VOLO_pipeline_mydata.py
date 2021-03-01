@@ -417,7 +417,7 @@ def GramSchmidtHelper(transformation):
     so3=[a1,a2,a3]
     O=GramSchmidt(so3,True)
     O=np.array(O)
-    transformation[:3,:3]=O[:3,:3]
+    transformation[:3,:3]=O[:3,:3].reshape(3,3)
     return transformation
 
 if __name__ == '__main__':
