@@ -251,7 +251,7 @@ def main():
             print("LO优化后的位姿,mean_dis: ", np.asarray(distacnces).mean())
             print(odom_transform)
             # print("LO迭代次数：", iterations)
-            SCM.addNode(PGM.curr_node_idx, curr_pts)
+            SCM.addNode(j+1, curr_pts)
             # 记录当前Key值和未优化位姿
             PGM.curr_node_idx = j + 1
             PGM.curr_se3 = np.matmul(PGM.curr_se3, odom_transform)

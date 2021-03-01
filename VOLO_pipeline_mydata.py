@@ -9,16 +9,13 @@ import argparse
 import numpy as np
 from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
-
 from modules.PointCloudMapping import MappingManager
-
-np.set_printoptions(precision=4)
-
 from models import PoseExpNet
 from utils.InverseWarp import pose_vec2mat
-
 from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
+from sympy import GramSchmidt
+np.set_printoptions(precision=4)
 
 parser = argparse.ArgumentParser(
     description='Script for PoseNet testing with corresponding groundTruth from KITTI Odometry',
@@ -29,33 +26,31 @@ parser.add_argument("--img-width", default=427, type=int, help="Image width")
 parser.add_argument("--no-resize", action='store_true', help="no resizing is done")
 parser.add_argument("--min-depth", default=1e-3)
 parser.add_argument("--max-depth", default=80)
-
 parser.add_argument("--dataset-dir",default='.', type=str, help="Dataset directory")
 parser.add_argument("--output-dir", default=None, type=str,
                     help="Output directory for saving predictions in a big 3D numpy file")
 parser.add_argument("--img-exts", default=['png', 'jpg', 'bmp'], nargs='*', type=str, help="images extensions to glob")
 parser.add_argument("--rotation-mode", default='euler', choices=['euler', 'quat'], type=str)
-
 parser.add_argument('--num_icp_points', type=int, default=5000)  # 5000 is enough for real time
 parser.add_argument('--proposal', type=int, default=2)
 parser.add_argument('--tolerance', type=float, default=0.001)
-
 parser.add_argument('--scm_type', type=str, default='ring')
 parser.add_argument('--num_rings', type=int, default=20)  # same as the original paper
 parser.add_argument('--num_sectors', type=int, default=60)  # same as the original paper
 parser.add_argument('--num_candidates', type=int, default=10)  # must be int
 parser.add_argument('--try_gap_loop_detection', type=int, default=10)  # same as the original paper
 parser.add_argument('--loop_threshold', type=float, default=0.11)  # 0.11 for sc, 0.015 for expand
-
 parser.add_argument('--data_base_dir', type=str,
                     default='/your/path/.../data_odometry_velodyne/dataset/sequences')
 parser.add_argument('--sequence_idx', type=str, default='09')
-
 parser.add_argument('--save_gap', type=int, default=300)
-parser.add_argument('--mapping', type=bool, default=False,help="display built real-time map")
+parser.add_argument('--mapping', type=bool, default=True,help="build real-time map")
+parser.add_argument('--vizmapping', type=bool, default=False,help="display the real-time map")
 
+# CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
 args = parser.parse_args()
 if args.scm_type == "ring":
     from modules.RingScanContextManager import *
@@ -81,8 +76,9 @@ def main():
     print('{} snippets to test'.format(len(framework)))
     errors = np.zeros((len(framework), 2), np.float32)
     optimized_errors = np.zeros((len(framework), 2), np.float32)
-    iteration_arr = np.zeros(len(framework))
-    LO_iter_times = np.zeros(len(framework))
+    ICP_iterations = np.zeros(len(framework))
+    VO_processing_time = np.zeros(len(framework))
+    ICP_iteration_time = np.zeros(len(framework))
 
     if args.output_dir is not None:
         output_dir = Path(args.output_dir)
@@ -108,9 +104,8 @@ def main():
         '''尺度因子'''
         scale_factors=np.zeros((len(framework), 1))
 
-
-
     abs_VO_pose = np.identity(4)[:3,:]
+    # 用来估计尺度因子
     last_pose = np.identity(4)
     last_VO_pose = np.identity(4)
 
@@ -120,19 +115,15 @@ def main():
                                              [-4.65337018e-03, -5.36307196e-03, -9.99969412e-01],
                                              [9.99870070e-01, -1.56647995e-02, -4.48880010e-03]])
     Transform_matrix_L2C[:3, -1:] = np.array([4.29029924e-03, -6.08539196e-02, -9.20346161e-02]).reshape(3, 1)
-
-
+    Transform_matrix_L2C=GramSchmidt(Transform_matrix_L2C,True)
     Transform_matrix_C2L = np.linalg.inv(Transform_matrix_L2C)
 
     pointClouds = loadPointCloud(args.dataset_dir + "/sequences/" + args.sequence_idx + "/velodyne")
 
-    # *************可视化准备***********************
-    num_frames = len(tqdm(framework))
-    # Pose Graph Manager (for back-end optimization) initialization
+    '''Pose Graph Manager (for back-end optimization) initialization'''
     PGM = PoseGraphManager()
     PGM.addPriorFactor()
-
-    # Result saver
+    num_frames = len(tqdm(framework))
     save_dir = "result/" + args.sequence_idx
     if not os.path.exists(save_dir): os.makedirs(save_dir)
     ResultSaver = PoseGraphResultSaver(init_pose=PGM.curr_se3,
@@ -140,11 +131,11 @@ def main():
                                        num_frames=num_frames,
                                        seq_idx=args.sequence_idx,
                                        save_dir=save_dir)
-
-    # Scan Context Manager (for loop detection) initialization
+    '''Scan Context Manager (for loop detection) initialization'''
     SCM = ScanContextManager(shape=[args.num_rings, args.num_sectors],
                              num_candidates=args.num_candidates,
                              threshold=args.loop_threshold)
+    '''Mapping initialzation'''
     if args.mapping is True:
         Map = MappingManager()
 
@@ -160,12 +151,10 @@ def main():
     with writer.saving(fig, video_name, num_frames_to_save):  # this video saving part is optional
 
         for j, sample in enumerate(tqdm(framework)):
-
             '''
             ***************************************VO部分*******************************************
             '''
             imgs = sample['imgs']
-
             w, h = imgs[0].size
             if (not args.no_resize) and (h != args.img_height or w != args.img_width):
                 imgs = [(np.array(img.resize(( args.img_width,args.img_height)))).astype(np.float32) for img in imgs]
@@ -182,7 +171,7 @@ def main():
 
             startTimeVO = time.time()
             _, poses = pose_net(tgt_img, ref_imgs)
-            timeCostVO = time.time() - startTimeVO
+            VO_processing_time[j] = time.time() - startTimeVO
 
             poses = poses.cpu()[0]
             poses = torch.cat([poses[:len(imgs) // 2], torch.zeros(1, 6).float(), poses[len(imgs) // 2:]])
@@ -198,19 +187,9 @@ def main():
             first_inv_transform = inv_transform_matrices[0]
             final_poses = first_inv_transform[:, :3] @ transform_matrices
             final_poses[:, :, -1:] += first_inv_transform[:, -1:]
-            # print('poses')
-            # print(final_poses)
-
             # cur_VO_pose取final poses的第2项，则是取T10,T21,T32。。。
             cur_VO_pose = np.identity(4)
             cur_VO_pose[:3, :] = final_poses[1]
-            # print("对齐前未有尺度修正的帧间位姿")
-            # print(cur_VO_pose)
-            #
-            # print("last_pose")
-            # print(last_pose)
-            # print("last_VO_pose")
-            # print(last_VO_pose)
 
             # 尺度因子的确定：采用上一帧的LO输出位姿和VO输出位姿的尺度比值作为当前帧的尺度因子，初始尺度为1
             if j == 0:
@@ -218,23 +197,15 @@ def main():
             else:
                 scale_factor = math.sqrt(np.sum(last_pose[:3, -1] ** 2) / np.sum(last_VO_pose[:3, -1] ** 2))
             scale_factors[j]=scale_factor
-                # print("分子", np.sum(last_pose[:3, -1] ** 2))
-                # print("分母", np.sum(last_VO_pose[:3, -1] ** 2))
             last_VO_pose = copy.deepcopy(cur_VO_pose)  # 注意深拷贝
-            # print("尺度因子：", scale_factor)
-
-            # 先尺度修正，再对齐
+            # 先尺度修正，再对齐坐标系，施密特正交化避免病态矩阵
             cur_VO_pose[:3, -1:] = cur_VO_pose[:3, -1:] * scale_factor
             cur_VO_poses_C[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
-            # print("尺度修正后...")
-            # print(cur_VO_pose)
             cur_VO_pose = Transform_matrix_C2L @ cur_VO_pose @ np.linalg.inv(Transform_matrix_C2L)
-
-            # print("对齐到雷达坐标系帧间位姿")
-            # print(cur_VO_pose)
+            cur_VO_pose=GramSchmidt(cur_VO_pose,True)
 
             '''*************************LO部分******************************************'''
-            # 为了和VO对应，LO
+            # 初始化
             if j == 0:
                 last_pts = random_sampling(pointClouds[j], args.num_icp_points)
                 SCM.addNode(j, last_pts)
@@ -246,7 +217,6 @@ def main():
             curr_pts = random_sampling(pointClouds[j + 1], args.num_icp_points)
 
             from modules.ICP import icp
-
             # 选择LO的初值预估，分别是无预估，上一帧位姿，VO位姿
             if args.proposal ==  0:
                 init_pose = None
@@ -255,26 +225,25 @@ def main():
             elif args.proposal == 2:
                 init_pose = cur_VO_pose
 
-            startTimeLO = time.time()
-            odom_transform, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
+            startTime = time.time()
+            icp_odom_transform, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
                                                          tolerance=args.tolerance,
                                                          max_iterations=50)
-            iter_time = time.time() - startTimeLO
-            LO_iter_times[j] = iter_time
-            iteration_arr[j] = iterations
+            ICP_iteration_time[j] =time.time() - startTime
+            ICP_iterations[j] = iterations
 
             last_pts = curr_pts
-            last_pose = odom_transform
+            last_pose = icp_odom_transform
 
             print("LO优化后的位姿,mean_dis: ", np.asarray(distacnces).mean())
-            print(odom_transform)
-            # print("LO迭代次数：", iterations)
-            SCM.addNode(PGM.curr_node_idx, curr_pts)
-            # 记录当前Key值和未优化位姿
+            print(icp_odom_transform)
+
+            '''Update loop detection nodes'''
+            SCM.addNode(j + 1, curr_pts)
+            '''Update the edges and nodes of pose graph'''
             PGM.curr_node_idx = j + 1
-            PGM.curr_se3 = np.matmul(PGM.curr_se3, odom_transform)
-            # 将当前里程计因子加入因子图
-            PGM.addOdometryFactor(odom_transform)
+            PGM.curr_se3 = np.matmul(PGM.curr_se3, icp_odom_transform)
+            PGM.addOdometryFactor(icp_odom_transform)
             PGM.prev_node_idx = PGM.curr_node_idx
 
             # 建图更新
@@ -312,7 +281,7 @@ def main():
             if (j % num_frames_to_skip_to_show == 0):
                 ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
                 writer.grab_frame()
-            if args.mapping is True:
+            if args.vizmapping is True:
                 Map.vizMapWithOpen3D()
 
             # 对齐到雷达坐标系下，VO输出的绝对位姿
@@ -322,19 +291,27 @@ def main():
             if args.output_dir is not None:
                 predictions_array[j] = final_poses
                 #cur_VO_poses[j]=cur_VO_pose[:3, :].reshape(-1, 12)[0]
-                cur_LO_poses[j]=odom_transform[:3,:].reshape(-1,12)[0]
+                cur_LO_poses[j]=icp_odom_transform[:3,:].reshape(-1,12)[0]
                 abs_VO_poses[j] = abs_VO_pose[:3, :].reshape(-1, 12)[0]
                 abs_LO_poses[j] = PGM.curr_se3[:3,:].reshape(-1,12)[0]
                 est_pose=Transform_matrix_L2C @ PGM.curr_se3 @ np.linalg.inv(Transform_matrix_L2C)
                 est_poses[j+1]=est_pose[:3,:].reshape(-1,12)[0]
 
-            # ATE, RE = compute_pose_error(sample['poses'], final_poses)
-            # errors[j] = ATE, RE
 
-            # optimized_ATE, optimized_RE = compute_LO_pose_error(sample['poses'], odom_transform, Transform_matrix_L2C)
-            # optimized_errors[j] = optimized_ATE, optimized_RE
         if args.mapping is True:
-            Map.saveMap2File('map_'+args.sequence_idx+'.pcd')
+            Map.saveMap2File('map_'+args.sequence_idx + "_" + str(args.num_icp_points) + "_prop@" + str(
+            args.proposal) + "_tolerance@" + str(args.tolerance) + "_scm@" + str(args.scm_type) +
+            "_thresh@" + str(args.loop_threshold) +'.pcd')
+        if args.output_dir is not None:
+            #np.save(output_dir / 'predictions.npy', predictions_array)
+            np.savetxt(output_dir / 'scale_factors.txt', scale_factors)
+            np.savetxt(output_dir / 'cur_VO_poses_C.txt', cur_VO_poses_C)
+            np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
+            np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
+            np.savetxt(output_dir / 'cur_LO_poses.txt', cur_LO_poses)
+            np.savetxt(output_dir / 'abs_LO_poses.txt', abs_LO_poses)
+            np.savetxt(output_dir / 'iterations.txt', ICP_iterations)
+            np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)
@@ -357,8 +334,8 @@ def main():
         print("std \t {:10.4f}, {:10.4f}".format(*optimized_std_errors))
 
         # 迭代次数
-        mean_iterations = iteration_arr.mean()
-        std_iterations = iteration_arr.std()
+        mean_iterations = ICP_iterations.mean()
+        std_iterations = ICP_iterations.std()
         _names = ['iteration']
         print('')
         print("LO迭代次数")
@@ -367,25 +344,14 @@ def main():
         print("std \t {:10.4f}".format(std_iterations))
 
         # 迭代时间
-        mean_iter_time = LO_iter_times.mean()
-        std_iter_time = LO_iter_times.std()
+        mean_iter_time = ICP_iteration_time.mean()
+        std_iter_time = ICP_iteration_time.std()
         _names = ['iter_time']
         print('')
         print("LO迭代时间：单位/s")
         print("\t {:>10}".format(*_names))
         print("mean \t {:10.4f}".format(mean_iter_time))
         print("std \t {:10.4f}".format(std_iter_time))
-
-        if args.output_dir is not None:
-            #np.save(output_dir / 'predictions.npy', predictions_array)
-            np.savetxt(output_dir / 'scale_factors.txt', scale_factors)
-            np.savetxt(output_dir / 'cur_VO_poses_C.txt', cur_VO_poses_C)
-            np.savetxt(output_dir / 'cur_VO_poses.txt', cur_VO_poses)
-            np.savetxt(output_dir / 'abs_VO_poses.txt', abs_VO_poses)
-            np.savetxt(output_dir / 'cur_LO_poses.txt', cur_LO_poses)
-            np.savetxt(output_dir / 'abs_LO_poses.txt', abs_LO_poses)
-            np.savetxt(output_dir / 'iterations.txt', iteration_arr)
-            np.savetxt(output_dir/'est_kitti_{0}_poses.txt'.format(args.sequence_idx),est_poses)
 
 
 def compute_LO_pose_error(gt, odom_transform, Transform_matrix_L2C=None):
