@@ -411,13 +411,14 @@ def loadPointCloud(rootdir):
     return pointclouds
 
 def GramSchmidtHelper(transformation):
-    a1=Matrix(transformation[0,:])
-    a2 = Matrix(transformation[1, :])
-    a3 = Matrix(transformation[2, :])
-    a4 = Matrix(transformation[3, :])
-    T=[a1,a2,a3,a4]
-    O=GramSchmidt(T,True)
-    return np.array(O)
+    a1=Matrix(transformation[0,:3])
+    a2 = Matrix(transformation[1, :3])
+    a3 = Matrix(transformation[2, :3])
+    so3=[a1,a2,a3]
+    O=GramSchmidt(so3,True)
+    O=np.array(O)
+    transformation[:3,:3]=O[:3,:3]
+    return transformation
 
 if __name__ == '__main__':
     main()
