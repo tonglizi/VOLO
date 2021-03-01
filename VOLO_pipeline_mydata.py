@@ -14,7 +14,7 @@ from models import PoseExpNet
 from utils.InverseWarp import pose_vec2mat
 from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
-from sympy import GramSchmidt
+from sympy import *
 np.set_printoptions(precision=4)
 
 parser = argparse.ArgumentParser(
@@ -115,7 +115,7 @@ def main():
                                              [-4.65337018e-03, -5.36307196e-03, -9.99969412e-01],
                                              [9.99870070e-01, -1.56647995e-02, -4.48880010e-03]])
     Transform_matrix_L2C[:3, -1:] = np.array([4.29029924e-03, -6.08539196e-02, -9.20346161e-02]).reshape(3, 1)
-    Transform_matrix_L2C=GramSchmidt(Transform_matrix_L2C,True)
+    Transform_matrix_L2C=GramSchmidtHelper(Transform_matrix_L2C)
     Transform_matrix_C2L = np.linalg.inv(Transform_matrix_L2C)
 
     pointClouds = loadPointCloud(args.dataset_dir + "/sequences/" + args.sequence_idx + "/velodyne")
@@ -410,6 +410,14 @@ def loadPointCloud(rootdir):
             pointclouds.append(ptcloud_xyz)
     return pointclouds
 
+def GramSchmidtHelper(transformation):
+    a1=Matrix(transformation[0,:])
+    a2 = Matrix(transformation[1, :])
+    a3 = Matrix(transformation[2, :])
+    a4 = Matrix(transformation[3, :])
+    T=[a1,a2,a3,a4]
+    O=GramSchmidt(T,True)
+    return np.array(O)
 
 if __name__ == '__main__':
     main()

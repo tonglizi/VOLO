@@ -120,4 +120,4 @@ class MappingManager:
 #     # map.vizMap(1)
 #     map.vizMapWithOpen3D()
 # map.saveMap2File("map.pcd")
-showPointcloudFromFile("map_20201220_846.pcd")
+#showPointcloudFromFile("map_20201220_846.pcd")
