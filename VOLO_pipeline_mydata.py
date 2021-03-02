@@ -202,7 +202,7 @@ def main():
             cur_VO_pose[:3, -1:] = cur_VO_pose[:3, -1:] * scale_factor
             cur_VO_poses_C[j]=cur_VO_pose[:3,:].reshape(-1,12)[0]
             cur_VO_pose = Transform_matrix_C2L @ cur_VO_pose @ np.linalg.inv(Transform_matrix_C2L)
-            cur_VO_pose=GramSchmidt(cur_VO_pose,True)
+            cur_VO_pose=GramSchmidtHelper(cur_VO_pose,True)
 
             '''*************************LO部分******************************************'''
             # 初始化
