@@ -40,7 +40,7 @@ class MappingManager:
         # self.viz.get_render_option().point_size = 2.0
         # self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
         self.viz.add_geometry(self.pointcloud)
-        self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
+        # self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
 
     def updateMap(self, down_points=100):
         # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
