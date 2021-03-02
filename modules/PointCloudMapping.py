@@ -37,8 +37,8 @@ class MappingManager:
         self.pointcloud = o3d.geometry.PointCloud()
         self.viz = o3d.visualization.Visualizer()
         self.viz.create_window()
-        self.viz.get_render_option().point_size = 2.0
-        self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
+        # self.viz.get_render_option().point_size = 2.0
+        # self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
         self.viz.add_geometry(self.pointcloud)
         self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
 
