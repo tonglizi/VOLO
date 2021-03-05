@@ -274,7 +274,7 @@ def main():
             sec_last_pts = last_pts
             last_pts = curr_pts
             # gap2预估位姿
-            last_gap2_VO_pose = gap2_VO_pose
+            last_gap2_VO_pose = copy.deepcopy(gap2_VO_pose)
             # icp 输出位姿
             last_pose = icp_odom_transform_1
             last_gap2_pose = icp_odom_transform_2
