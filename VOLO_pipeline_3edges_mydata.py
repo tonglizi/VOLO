@@ -264,6 +264,8 @@ def main():
             ICP_iteration_time[j] = time.time() - startTime
             ICP_iterations[j] = (iterations + iterations_2) / 2
 
+            print("last_pose ")
+            print(last_pose)
             '''更新指针'''
             # 点云
             sec_last_pts = last_pts
@@ -276,6 +278,9 @@ def main():
 
             print("LO优化后的位姿,mean_dis: ", np.asarray(distacnces).mean())
             print(icp_odom_transform_1)
+
+            print("icp_odom_transform_2")
+            print(icp_odom_transform_2)
 
             '''Update loop detection nodes'''
             SCM.addNode(j + 1, curr_pts)
