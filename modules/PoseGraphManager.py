@@ -20,12 +20,14 @@ class PoseGraphManager:
         self.curr_se3 = None
         self.curr_node_idx = None
         self.prev_node_idx = None
+        self.sec_prev_node_idx = None
 
         self.graph_optimized = None
 
     def addPriorFactor(self):
         self.curr_node_idx = 0
         self.prev_node_idx = 0
+        self.sec_prev_node_idx = 0
 
         self.curr_se3 = np.eye(4)
 
@@ -35,13 +37,21 @@ class PoseGraphManager:
                                                 minisam.SE3(self.curr_se3), 
                                                 self.prior_cov))
 
-    def addOdometryFactor(self, odom_transform):
-        self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
-        self.graph_factors.add(minisam.BetweenFactor(
-                                                minisam.key('x', self.prev_node_idx), 
-                                                minisam.key('x', self.curr_node_idx), 
-                                                minisam.SE3(odom_transform), 
-                                                self.odom_cov))
+    def addOdometryFactor(self,odom_transform,second_last=-1):
+        if second_last==-2:
+            self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
+            self.graph_factors.add(minisam.BetweenFactor(
+                minisam.key('x', self.sec_prev_node_idx),
+                minisam.key('x', self.curr_node_idx),
+                minisam.SE3(odom_transform),
+                self.odom_cov))
+        elif second_last==-1:
+            self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
+            self.graph_factors.add(minisam.BetweenFactor(
+                minisam.key('x', self.prev_node_idx),
+                minisam.key('x', self.curr_node_idx),
+                minisam.SE3(odom_transform),
+                self.odom_cov))
 
     def addLoopFactor(self, loop_transform, loop_idx):
         self.graph_factors.add(minisam.BetweenFactor(
