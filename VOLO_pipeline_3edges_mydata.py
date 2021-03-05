@@ -247,7 +247,10 @@ def main():
             elif args.proposal == 2:
                 init_pose_1 = gap1_VO_pose
                 init_pose_2 = last_gap2_VO_pose
-
+            print("init_pose_1 ")
+            print(init_pose_1)
+            print("init_pose_2 ")
+            print(init_pose_2)
             startTime = time.time()
             icp_odom_transform_1, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose_1,
                                                                tolerance=args.tolerance,
