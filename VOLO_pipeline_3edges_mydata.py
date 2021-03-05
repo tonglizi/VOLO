@@ -259,7 +259,7 @@ def main():
             else:
                 icp_odom_transform_2 = icp_odom_transform_1
                 distacnces_2 = distacnces
-                iterations_2 - iterations
+                iterations_2 = iterations
 
             ICP_iteration_time[j] = time.time() - startTime
             ICP_iterations[j] = (iterations + iterations_2) / 2
