@@ -1,12 +1,14 @@
 import numpy as np
+
 np.set_printoptions(precision=4)
 
 import minisam
 from utils.UtilsMisc import *
-    
+
+
 class PoseGraphManager:
     def __init__(self):
-        self.prior_cov = minisam.DiagonalLoss.Sigmas(np.array([1e-6, 1e-6, 1e-6, 1e-4, 1e-4, 1e-4])) 
+        self.prior_cov = minisam.DiagonalLoss.Sigmas(np.array([1e-6, 1e-6, 1e-6, 1e-4, 1e-4, 1e-4]))
         self.const_cov = np.array([0.5, 0.5, 0.5, 0.1, 0.1, 0.1])
         self.odom_cov = minisam.DiagonalLoss.Sigmas(self.const_cov)
         self.loop_cov = minisam.DiagonalLoss.Sigmas(self.const_cov)
@@ -33,32 +35,35 @@ class PoseGraphManager:
 
         self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
         self.graph_factors.add(minisam.PriorFactor(
-                                                minisam.key('x', self.curr_node_idx), 
-                                                minisam.SE3(self.curr_se3), 
-                                                self.prior_cov))
+            minisam.key('x', self.curr_node_idx),
+            minisam.SE3(self.curr_se3),
+            self.prior_cov))
 
-    def addOdometryFactor(self,odom_transform,second_last=-1):
-        if second_last==-2:
-            self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
-            self.graph_factors.add(minisam.BetweenFactor(
-                minisam.key('x', self.sec_prev_node_idx),
-                minisam.key('x', self.curr_node_idx),
-                minisam.SE3(odom_transform),
-                self.odom_cov))
-        elif second_last==-1:
+    def addOdometryFactor(self, odom_transform, second_last=-1):
+        '''
+        -1代表当前帧和上一帧产生约束，-2代表当前帧和上上一帧产生约束
+        注意：先进行和上一帧的约束，在进行上上一帧的约束，顺序不能乱
+        '''
+        if second_last == -1:
             self.graph_initials.add(minisam.key('x', self.curr_node_idx), minisam.SE3(self.curr_se3))
             self.graph_factors.add(minisam.BetweenFactor(
                 minisam.key('x', self.prev_node_idx),
                 minisam.key('x', self.curr_node_idx),
                 minisam.SE3(odom_transform),
                 self.odom_cov))
+        elif second_last == -2:
+            self.graph_factors.add(minisam.BetweenFactor(
+                minisam.key('x', self.sec_prev_node_idx),
+                minisam.key('x', self.curr_node_idx),
+                minisam.SE3(odom_transform),
+                self.odom_cov))
 
     def addLoopFactor(self, loop_transform, loop_idx):
         self.graph_factors.add(minisam.BetweenFactor(
-                                            minisam.key('x', loop_idx), 
-                                            minisam.key('x', self.curr_node_idx),  
-                                            minisam.SE3(loop_transform), 
-                                            self.loop_cov))
+            minisam.key('x', loop_idx),
+            minisam.key('x', self.curr_node_idx),
+            minisam.SE3(loop_transform),
+            self.loop_cov))
 
     def optimizePoseGraph(self):
         self.graph_optimized = minisam.Variables()
@@ -70,5 +75,3 @@ class PoseGraphManager:
         pose_trans, pose_rot = getGraphNodePose(self.graph_optimized, self.curr_node_idx)
         self.curr_se3[:3, :3] = pose_rot
         self.curr_se3[:3, 3] = pose_trans
-        
-        
