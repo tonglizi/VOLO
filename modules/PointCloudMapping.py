@@ -71,7 +71,7 @@ class MappingManager:
         # visualizaton
         self.viz = None
 
-    def updateMap(self, curr_se3, curr_local_ptcloud, down_points=100):
+    def updateMap(self, curr_se3, curr_local_ptcloud, down_points=100,submap_points=10000):
         '''
         创建并更新地图，正常情况下每一个位姿点都需要进行一次
         :param curr_se3:
@@ -82,6 +82,7 @@ class MappingManager:
         # 更新字段
         self.curr_se3 = curr_se3
         self.curr_local_ptcloud = curr_local_ptcloud
+        self.submap_points=submap_points
         # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
         self.curr_local_ptcloud = random_sampling(self.curr_local_ptcloud, down_points)
         tail = np.zeros((self.curr_local_ptcloud.shape[0], 1))
@@ -102,7 +103,8 @@ class MappingManager:
         if self.sub_ptcloud_list.qsize() == self.k and (not self.sub_ptcloud_list.empty()):
             self.sub_ptcloud_list.get()
             self.se3_list.get()
-        self.sub_ptcloud_list.put(self.curr_local_ptcloud)
+        downsample_ptcloud=random_sampling(curr_local_ptcloud,self.submap_points)
+        self.sub_ptcloud_list.put(downsample_ptcloud)
         self.se3_list.put(curr_se3)
 
     def optimizeGlobalMap(self, graph_optimized, curr_node_idx=None):
@@ -156,6 +158,7 @@ class MappingManager:
     def getSubMap(self):
         self.se3_to_curr_ptcloud_list = transform_to_curr_ptclound(self.se3_list)
         self.sub_ptcloud = integrateSubmap(self.sub_ptcloud_list, self.se3_to_curr_ptcloud_list)
+        self.sub_ptcloud=random_sampling(self.sub_ptcloud,self.submap_points)
         return self.sub_ptcloud
 
 
