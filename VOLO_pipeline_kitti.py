@@ -68,7 +68,7 @@ elif args.scm_type == "combined":
 
 @torch.no_grad()
 def main():
-    from utils.UtilsPoseEvaluationKitti import test_framework_KITTI as test_framework
+    from utils.UtilsKitti import test_framework_KITTI as test_framework
 
     weights = torch.load(args.pretrained_posenet)
     seq_length = int(weights['state_dict']['conv1.0.weight'].size(1) / 3)
