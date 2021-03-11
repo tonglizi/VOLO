@@ -104,6 +104,10 @@ class MappingManager:
             self.sub_ptcloud_list.get()
             self.se3_list.get()
         downsample_ptcloud=random_sampling(curr_local_ptcloud,self.submap_points)
+        # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
+        tail = np.zeros((downsample_ptcloud.shape[0], 1))
+        tail.fill(1)
+        downsample_ptcloud = np.concatenate([downsample_ptcloud, tail], axis=1)
         self.sub_ptcloud_list.put(downsample_ptcloud)
         self.se3_list.put(curr_se3)
 
