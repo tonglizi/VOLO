@@ -242,7 +242,7 @@ def main():
                 init_pose = rel_VO_pose
 
             startTime = time.time()
-            if args.sacn2submap:
+            if args.scan2submap:
                 submap = Map.getSubMap()
                 rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
                                                           tolerance=args.tolerance,
