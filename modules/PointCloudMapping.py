@@ -34,13 +34,9 @@ class MappingManager:
         self.ptcloud_list = []
         self.curr_se3 = np.identity(4)
         # visualizaton
-        self.pointcloud = o3d.geometry.PointCloud()
-        self.viz = o3d.visualization.Visualizer()
-        self.viz.create_window()
-        # self.viz.get_render_option().point_size = 2.0
-        # self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
-        self.viz.add_geometry(self.pointcloud)
-        # self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
+        self.pointcloud=None
+        self.viz=None
+
 
     def updateMap(self, down_points=100):
         # 将点云坐标转化为齐次坐标（x,y,z）->(x,y,z,1)
@@ -77,9 +73,17 @@ class MappingManager:
         self.curr_se3[:3, 3] = pose_trans
 
     def vizMapWithOpen3D(self):
+        if self.pointcloud==None or self.viz==None:
+            self.pointcloud = o3d.geometry.PointCloud()
+            self.viz = o3d.visualization.Visualizer()
+            self.viz.create_window()
+            # self.viz.get_render_option().point_size = 2.0
+            # self.viz.get_render_option().point_color_option = o3d.visualization.PointColorOption.XCoordinate
+            self.viz.add_geometry(self.pointcloud)
+            # self.viz.add_geometry(o3d.geometry.TriangleMesh.create_coordinate_frame(size=400, origin=[0., 0., 0.]))
         if self.global_ptcloud is not None:
             self.pointcloud.points = o3d.utility.Vector3dVector(self.global_ptcloud)
-            self.viz.update_geometry(self.pointcloud)
+            self.viz.update_geometry()
             self.viz.poll_events()
             self.viz.update_renderer()
 
@@ -87,37 +91,4 @@ class MappingManager:
         if self.global_ptcloud is not None:
             o3d.io.write_point_cloud(filename, self.pointcloud)
 
-    # use matplotlib to display 3d ptcloud, low efficiency
-    # def vizMap(self, fig_idx=None):
-    #     import matplotlib.pyplot as plt
-    #     x = self.global_ptcloud[:, 0]
-    #     y = self.global_ptcloud[:, 1]
-    #     z = self.global_ptcloud[:, 2]
-    #     fig = plt.figure(fig_idx)
-    #     plt.clf()
-    #     ax = fig.add_subplot(111, projection='3d')
-    #     plt.title("CurrentMap")
-    #     ax.scatter(-y, x, z, c=y, marker='.', s=2, linewidth=0, alpha=1, cmap='summer')
-    #     ax.set_xlabel('X Label')
-    #     ax.set_ylabel('Y Label')
-    #     ax.set_zlabel('Z Label')
-    #     plt.draw()
-    #     plt.pause(0.01)
 
-
-# # ******test script*******
-# curr_se3 = np.identity(4)
-# curr_se3[:3, -1] = [1, 1, 0]
-# map = MappingManager()
-# map.curr_se3 = curr_se3
-# points = np.random.random((1000, 3))
-# i = 0
-# while (i < 100):
-#     i += 1
-#     points -= 0.001
-#     map.curr_local_ptcloud = points
-#     map.updateMap()
-#     # map.vizMap(1)
-#     map.vizMapWithOpen3D()
-# map.saveMap2File("map.pcd")
-#showPointcloudFromFile("map_20201220_846.pcd")

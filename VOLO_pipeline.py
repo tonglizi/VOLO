@@ -92,8 +92,8 @@ def main():
     if args.isKitti:
         from utils.UtilsKitti import test_framework_KITTI as test_framework
         save_dir = os.path.join(args.output_dir, "kitti", args.sequence_idx, 'net_' + net_ID)
-        downsample_img_height=128
-        downsample_img_width=416
+        downsample_img_height = 128
+        downsample_img_width = 416
         Transform_matrix_L2C[:3, :3] = np.array([[7.533745e-03, -9.999714e-01, -6.166020e-04],
                                                  [1.480249e-02, 7.280733e-04, -9.998902e-01],
                                                  [9.998621e-01, 7.523790e-03, 1.480755e-02]])
@@ -101,8 +101,8 @@ def main():
     else:
         from utils.UtilsMyData import test_framework_MyData as test_framework
         save_dir = os.path.join(args.output_dir, "mydataset", args.sequence_idx, 'net_' + net_ID)
-        downsample_img_height=args.img_height
-        downsample_img_width=args.img_width
+        downsample_img_height = args.img_height
+        downsample_img_width = args.img_width
         Transform_matrix_L2C[:3, :3] = np.array([[-1.51482698e-02, -9.99886648e-01, 5.36310553e-03],
                                                  [-4.65337018e-03, -5.36307196e-03, -9.99969412e-01],
                                                  [9.99870070e-01, -1.56647995e-02, -4.48880010e-03]])
@@ -113,7 +113,7 @@ def main():
     dataset_dir = Path(args.dataset_dir)
     sequences = [args.sequence_idx]
     framework = test_framework(dataset_dir, sequences, seq_length)
-    pointcloud_dir=os.path.join(args.dataset_dir,'sequences',args.sequence_idx,'velodyne')
+    pointcloud_dir = os.path.join(args.dataset_dir, 'sequences', args.sequence_idx, 'velodyne')
     pointClouds = loadPointCloud(pointcloud_dir)
     print('{} snippets to test'.format(len(framework)))
     '''误差初始化'''
@@ -172,7 +172,7 @@ def main():
     vedio_name = "pts@" + str(args.num_icp_points) + "_prop@" + str(
         args.proposal) + "_tolerance@" + str(
         args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(args.loop_threshold) + ".mp4"
-    vedio_path=os.path.join(save_dir,vedio_name)
+    vedio_path = os.path.join(save_dir, vedio_name)
     num_frames_to_skip_to_show = 5
     num_frames_to_save = np.floor(num_frames / num_frames_to_skip_to_show)
     with writer.saving(fig, vedio_path, num_frames_to_save):  # this video saving part is optional
@@ -181,11 +181,12 @@ def main():
             '''
             ***************************************VO部分*******************************************
             '''
-            #图像降采样
+            # 图像降采样
             imgs = sample['imgs']
             w, h = imgs[0].size
             if (not args.no_resize) and (h != downsample_img_height or w != downsample_img_width):
-                imgs = [(np.array(img.resize((downsample_img_width, downsample_img_height)))).astype(np.float32) for img in imgs]
+                imgs = [(np.array(img.resize((downsample_img_width, downsample_img_height)))).astype(np.float32) for img
+                        in imgs]
             imgs = [np.transpose(img, (2, 0, 1)) for img in imgs]
             # numpy array 转troch tensor
             ref_imgs = []
@@ -300,13 +301,16 @@ def main():
                 Map.vizMapWithOpen3D()
 
         if args.mapping is True:
-            Map.saveMap2File('pts@' + str(args.num_icp_points) + "_prop@" + str(
-                args.proposal) + "_tolerance@" + str(args.tolerance) + "_scm@" + str(args.scm_type) +
-                             "_thresh@" + str(args.loop_threshold) + '.pcd')
+            map_name = 'pts@' + str(args.num_icp_points) + "_prop@" + str(
+                args.proposal) + "_tolerance@" + str(args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(
+                args.loop_threshold) + '.pcd'
+            map_path = os.path.join(save_dir, map_name)
+            Map.saveMap2File(map_path)
+
         if args.output_dir is not None:
             # np.save(output_dir / 'predictions.npy', predictions_array)
             np.savetxt(save_dir / 'scale_factors.txt', scale_factors)
-            np.savetxt(save_dir / 'cur_VO_poses.txt', rel_VO_poses)
+            np.savetxt(save_dir / 'rel_VO_poses.txt', rel_VO_poses)
             np.savetxt(save_dir / 'abs_VO_poses.txt', abs_VO_poses)
             if args.proposal == 0:
                 rel_LO_poses_file = 'rel_LO_poses_proposal@0.txt'
