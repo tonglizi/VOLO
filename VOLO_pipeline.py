@@ -273,7 +273,7 @@ def main():
 
             # 建图更新
             if args.mapping is True:
-                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=1000)
+                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=100,submap_points=args.num_icp_points)
 
             # loop detection and optimize the graph
             if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
