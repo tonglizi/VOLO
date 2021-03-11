@@ -58,6 +58,8 @@ parser.add_argument('--mapping', type=bool, default=True, help="build real-time 
 parser.add_argument('--vizmapping', type=bool, default=False, help="display the real-time map")
 parser.add_argument('--isKitti', type=bool, default=False,
                     help="Only for KITTI dataset test, if not, then for mydataset")
+parser.add_argument('--scan2submap', type=bool, default=False,
+                    help="ICP matching method: scan to scan (off); scan to sub map (on) ")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -227,9 +229,7 @@ def main():
                 last_pts = random_sampling(pointClouds[j], args.num_icp_points)
                 SCM.addNode(j, last_pts)
                 if args.mapping is True:
-                    Map.curr_se3 = PGM.curr_se3
-                    Map.curr_local_ptcloud = last_pts
-                    Map.updateMap()
+                    Map.updateMap(curr_se3=PGM.curr_se3,curr_local_ptcloud=last_pts,down_points=1000)
 
             curr_pts = random_sampling(pointClouds[j + 1], args.num_icp_points)
 
@@ -242,10 +242,18 @@ def main():
                 init_pose = rel_VO_pose
 
             startTime = time.time()
-            rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
-                                                      tolerance=args.tolerance,
-                                                      max_iterations=50)
+            if args.sacn2submap:
+                submap = Map.getSubMap()
+                rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
+                                                          tolerance=args.tolerance,
+                                                          max_iterations=50)
+            else:
+                rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
+                                                          tolerance=args.tolerance,
+                                                          max_iterations=50)
+
             ICP_iteration_time[j] = time.time() - startTime
+
             ICP_iterations[j] = iterations
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
@@ -264,9 +272,7 @@ def main():
 
             # 建图更新
             if args.mapping is True:
-                Map.curr_local_ptcloud = curr_pts
-                Map.curr_se3 = PGM.curr_se3
-                Map.updateMap()
+                Map.updateMap(curr_se3=PGM.curr_se3,curr_local_ptcloud=curr_pts,down_points=1000)
 
             # loop detection and optimize the graph
             if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
