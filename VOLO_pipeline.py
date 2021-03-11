@@ -169,12 +169,13 @@ def main():
     fig_idx = 1
     fig = plt.figure(fig_idx)
     writer = FFMpegWriter(fps=15)
-    video_name = "pts@" + str(args.num_icp_points) + "_prop@" + str(
+    vedio_name = "pts@" + str(args.num_icp_points) + "_prop@" + str(
         args.proposal) + "_tolerance@" + str(
         args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(args.loop_threshold) + ".mp4"
+    vedio_path=os.path.join(save_dir,vedio_name)
     num_frames_to_skip_to_show = 5
     num_frames_to_save = np.floor(num_frames / num_frames_to_skip_to_show)
-    with writer.saving(fig, video_name, num_frames_to_save):  # this video saving part is optional
+    with writer.saving(fig, vedio_path, num_frames_to_save):  # this video saving part is optional
 
         for j, sample in enumerate(tqdm(framework)):
             '''
