@@ -29,12 +29,13 @@ def showPointcloudFromFile(filename=None):
 class MappingManager:
     def __init__(self):
         # internal vars
-        self.global_ptcloud = None
+        self.global_ptcloud = None # numpy type
         self.curr_local_ptcloud = None
         self.ptcloud_list = []
         self.curr_se3 = np.identity(4)
+
+        self.pointcloud = o3d.geometry.PointCloud()# open3d type
         # visualizaton
-        self.pointcloud=None
         self.viz=None
 
 
@@ -52,6 +53,8 @@ class MappingManager:
             self.global_ptcloud = sub_ptcloud_map.T[:, :3]
         else:
             self.global_ptcloud = np.concatenate([self.global_ptcloud, sub_ptcloud_map.T[:, :3]])
+        # updata open3d_pointscloud
+        self.pointcloud.points=o3d.utility.Vector3dVector(self.global_ptcloud)
 
     def optimizeGlobalMap(self, graph_optimized, curr_node_idx=None):
         global_ptcloud = None
@@ -67,14 +70,14 @@ class MappingManager:
                 global_ptcloud = np.concatenate([global_ptcloud, sub_ptcloud_map.T[:, :3]])
 
         self.global_ptcloud = global_ptcloud
+        self.pointcloud.points=o3d.utility.Vector3dVector(self.global_ptcloud)
         # correct current pose
         pose_trans, pose_rot = getGraphNodePose(graph_optimized, curr_node_idx)
         self.curr_se3[:3, :3] = pose_rot
         self.curr_se3[:3, 3] = pose_trans
 
     def vizMapWithOpen3D(self):
-        if self.pointcloud==None or self.viz==None:
-            self.pointcloud = o3d.geometry.PointCloud()
+        if self.viz==None:
             self.viz = o3d.visualization.Visualizer()
             self.viz.create_window()
             # self.viz.get_render_option().point_size = 2.0
