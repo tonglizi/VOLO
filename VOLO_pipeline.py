@@ -252,12 +252,12 @@ def main():
                 # rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
                 #                                           tolerance=args.tolerance,
                 #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(submap, curr_pts, trans_init=init_pose)
+                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, submap, trans_init=init_pose)
             else:
                 # rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
                 #                                           tolerance=args.tolerance,
                 #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(last_pts, curr_pts, trans_init=init_pose)
+                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, last_pts, trans_init=init_pose)
 
             print(rel_LO_pose)
             ICP_iteration_time[j] = time.time() - startTime
