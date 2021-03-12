@@ -16,6 +16,8 @@ from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
 from sympy import *
 
+from utils.UtilsPointcloud import loadPointCloud, random_sampling
+
 np.set_printoptions(precision=4)
 
 parser = argparse.ArgumentParser(
@@ -444,27 +446,6 @@ def compute_pose_error(gt, pred):
         RE += np.arctan2(s, c)
 
     return ATE / snippet_length, RE / snippet_length
-
-
-def random_sampling(orig_points, num_points):
-    assert orig_points.shape[0] > num_points
-    points_down_idx = random.sample(range(orig_points.shape[0]), num_points)
-    down_points = orig_points[points_down_idx, :]
-    return down_points
-
-
-def loadPointCloud(rootdir):
-    files = os.listdir(rootdir)
-    files.sort()
-    pointclouds = []
-    for file in files:
-        if not os.path.isdir(file):
-            scan = np.fromfile(rootdir + "/" + file, dtype=np.float32)
-            scan = scan.reshape((-1, 4))
-            ptcloud_xyz = scan[:, :-1]
-            print(ptcloud_xyz.shape)
-            pointclouds.append(ptcloud_xyz)
-    return pointclouds
 
 
 def GramSchmidtHelper(transformation):

@@ -17,13 +17,16 @@ import numpy as np
 from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
 
-from modules.ICP import icp
+# from modules.ICP import icp
+from modules.ICPRegistration import icp
 from modules.PointCloudMapping import MappingManager
 from models import PoseExpNet
 from utils.InverseWarp import pose_vec2mat
 from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
 from sympy import *
+
+from utils.UtilsPointcloud import loadPointCloud
 
 np.set_printoptions(precision=4)
 
@@ -245,13 +248,15 @@ def main():
             startTime = time.time()
             if args.scan2submap:
                 submap = Map.getSubMap()
-                rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
-                                                          tolerance=args.tolerance,
-                                                          max_iterations=50)
+                # rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
+                #                                           tolerance=args.tolerance,
+                #                                           max_iterations=50)
+                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, submap, trans_init=init_pose)
             else:
-                rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
-                                                          tolerance=args.tolerance,
-                                                          max_iterations=50)
+                # rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
+                #                                           tolerance=args.tolerance,
+                #                                           max_iterations=50)
+                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, last_pts, trans_init=init_pose)
 
             ICP_iteration_time[j] = time.time() - startTime
 
@@ -273,7 +278,8 @@ def main():
 
             # 建图更新
             if args.mapping is True:
-                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=100,submap_points=args.num_icp_points)
+                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=100,
+                              submap_points=args.num_icp_points)
 
             # loop detection and optimize the graph
             if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
@@ -423,27 +429,6 @@ def compute_pose_error(gt, pred):
         RE += np.arctan2(s, c)
 
     return ATE / snippet_length, RE / snippet_length
-
-
-def random_sampling(orig_points, num_points):
-    assert orig_points.shape[0] > num_points
-    points_down_idx = random.sample(range(orig_points.shape[0]), num_points)
-    down_points = orig_points[points_down_idx, :]
-    return down_points
-
-
-def loadPointCloud(rootdir):
-    files = os.listdir(rootdir)
-    files.sort()
-    pointclouds = []
-    for file in files:
-        if not os.path.isdir(file):
-            scan = np.fromfile(rootdir + "/" + file, dtype=np.float32)
-            scan = scan.reshape((-1, 4))
-            ptcloud_xyz = scan[:, :-1]
-            print(ptcloud_xyz.shape)
-            pointclouds.append(ptcloud_xyz)
-    return pointclouds
 
 
 def GramSchmidtHelper(transformation):

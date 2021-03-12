@@ -2,21 +2,12 @@
 # @Time : 2020/9/10 16:37 
 # @Author : CaiXin
 # @File : PointCloudMapping.py
-import random
 import numpy as np
 import open3d as o3d
 from queue import Queue
 
 from utils.UtilsMisc import getGraphNodePose
-
-
-def random_sampling(orig_points, num_points):
-    if orig_points.shape[0] > num_points:
-        points_down_idx = random.sample(range(orig_points.shape[0]), num_points)
-        down_points = orig_points[points_down_idx, :]
-        return down_points
-    else:
-        return orig_points
+from utils.UtilsPointcloud import random_sampling
 
 
 def showPointcloudFromFile(filename=None):

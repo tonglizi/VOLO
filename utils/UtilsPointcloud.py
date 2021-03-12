@@ -3,23 +3,36 @@ import random
 import numpy as np
 
 def random_sampling(orig_points, num_points):
-    assert orig_points.shape[0] > num_points
-
-    points_down_idx = random.sample(range(orig_points.shape[0]), num_points)
-    down_points = orig_points[points_down_idx, :]
-
-    return down_points
+    if orig_points.shape[0] > num_points:
+        points_down_idx = random.sample(range(orig_points.shape[0]), num_points)
+        down_points = orig_points[points_down_idx, :]
+        return down_points
+    else:
+        return orig_points
 
 def readScan(bin_path, dataset='KITTI'):
     if(dataset == 'KITTI'):
-        return readKittiScan(bin_path)
+        return readBinScan(bin_path)
 
 
-def readKittiScan(bin_path):
+def readBinScan(bin_path):
     scan = np.fromfile(bin_path, dtype=np.float32)
     scan = scan.reshape((-1, 4))
     ptcloud_xyz = scan[:, :-1]
     return ptcloud_xyz
+
+def loadPointCloud(rootdir):
+    files = os.listdir(rootdir)
+    files.sort()
+    pointclouds = []
+    for file in files:
+        if not os.path.isdir(file):
+            scan = np.fromfile(rootdir + "/" + file, dtype=np.float32)
+            scan = scan.reshape((-1, 4))
+            ptcloud_xyz = scan[:, :-1]
+            print(ptcloud_xyz.shape)
+            pointclouds.append(ptcloud_xyz)
+    return pointclouds
     
 
 class KittiScanDirManager:
