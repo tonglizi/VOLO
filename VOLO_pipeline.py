@@ -245,22 +245,24 @@ def main():
             elif args.proposal == 2:
                 init_pose = rel_VO_pose
 
+            print(init_pose)
             startTime = time.time()
             if args.scan2submap:
                 submap = Map.getSubMap()
                 # rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
                 #                                           tolerance=args.tolerance,
                 #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, submap, trans_init=init_pose)
+                rel_LO_pose, _, distacnces, iterations = icp(submap, curr_pts, trans_init=init_pose)
             else:
                 # rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
                 #                                           tolerance=args.tolerance,
                 #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, last_pts, trans_init=init_pose)
+                rel_LO_pose, _, distacnces, iterations = icp(last_pts, curr_pts, trans_init=init_pose)
 
+            print(rel_LO_pose)
             ICP_iteration_time[j] = time.time() - startTime
 
-            ICP_iterations[j] = iterations
+            # ICP_iterations[j] = iterations
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
             last_pts = curr_pts
