@@ -35,7 +35,7 @@ def icp(source, target, trans_init, threshold=0.05, downsample_voxpel_size=0.2, 
     result_ransac = execute_global_registration(source_down, target_down,
                                                 source_fpfh, target_fpfh,
                                                 threshold)
-    draw_registration_result(source_down, target_down, result_ransac.transformation)
+    # draw_registration_result(source_down, target_down, result_ransac.transformation)
     # ICP point to Plane refinement registration: fine mayching
     source.estimate_normals(
         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=20 * downsample_voxpel_size, max_nn=30))
@@ -43,7 +43,7 @@ def icp(source, target, trans_init, threshold=0.05, downsample_voxpel_size=0.2, 
         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=20 * downsample_voxpel_size, max_nn=30))
     result_icp = refine_registration(source, target,
                                      threshold, result_ransac.transformation)
-    draw_registration_result(source, target, result_icp.transformation)
+    # draw_registration_result(source, target, result_icp.transformation)
     return result_icp.transformation, result_icp.fitness, result_icp.inlier_rmse, result_icp.correspondence_set
 
 
