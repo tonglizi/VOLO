@@ -26,7 +26,7 @@ from modules.PoseGraphManager import *
 from utils.UtilsMisc import *
 from sympy import *
 
-from utils.UtilsPointcloud import loadPointCloud
+from utils.UtilsPointcloud import loadPointCloud, random_sampling
 
 np.set_printoptions(precision=4)
 
