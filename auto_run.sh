@@ -1,13 +1,17 @@
 #!/bin/bash
 interpreter="python3.6"
 script="VOLO_pipeline.py"
+
 model_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/checkpoints/
 pretrained_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/SfmLearner_Models/
+
 mydataset_dir=/home/sda/mydataset/
 kittidata_dir=/home/sda/dataset
+
 num_icp_points=(20000 15000)
 scm_type=(ring vertical combined)
 
+# 包括原生模型*1和新模型*10在训练集上训练的model
 vo_models_for_mydataset=(
   "data,b16,lr0.0004,m0.2/01-18-16:09/"
   "data,b16,lr0.0004/03-04-19:34/"
@@ -18,6 +22,8 @@ vo_models_for_mydataset=(
   "data,b16,lr0.0004/03-10-09:50/"
   "data,seq5,b8,lr0.0004/03-11-14:57/"
   "data,seq5,b8,lr0.0004/03-12-11:39/")
+
+# 包括原生模型*1和新模型*1在KITTI训练集上训练的model
 vo_models_for_kitti=(
 "data,500epochs,epoch_size3000,b32,m0.2/06-17-04_17/"
 )
@@ -70,7 +76,7 @@ for model in ${vo_models_for_kitti[@]}; do
   done
 done
 
-# 预训练模型在Kitti上的表现
+# 预训练模型在Kitti上的表现：1*11*2=22组
   # shellcheck disable=SC2068
   for data_seq in ${kittidataset[@]}; do
     # shellcheck disable=SC2068
