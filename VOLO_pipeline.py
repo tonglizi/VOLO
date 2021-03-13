@@ -175,7 +175,7 @@ def main():
     if args.mapping is True:
         Map = MappingManager()
 
-    # for save the results as a video
+    # for save the result as a video
     fig_idx = 1
     fig = plt.figure(fig_idx)
     writer = FFMpegWriter(fps=15)
@@ -331,6 +331,7 @@ def main():
             ResultSaver.saveRelativePosesResult(rel_LO_poses_file)
             ResultSaver.saveFinalPoseGraphResult(abs_LO_poses_file)
             np.savetxt(save_dir / 'iterations_' + suffix + '.txt', ICP_iterations)
+            np.savetxt(save_dir / 'iteration_time_' + suffix + '.txt', ICP_iteration_time)
             if args.isKitti:
                 np.savetxt(save_dir / 'est_poses_' + suffix + '.txt'.format(args.sequence_idx), est_poses)
 
@@ -353,6 +354,11 @@ def main():
         print("\t {:>10}, {:>10}".format(*optimized_error_names))
         print("mean \t {:10.4f}, {:10.4f}".format(*optimized_mean_errors))
         print("std \t {:10.4f}, {:10.4f}".format(*optimized_std_errors))
+
+        # 存储优化前后误差精度指标
+        if args.isKitti:
+            err_statics=np.array([mean_errors,std_errors,optimized_mean_errors,optimized_std_errors])
+            np.savetxt(save_dir / 'err_statics_' + suffix + '.txt'.format(args.sequence_idx), err_statics)
 
         # 迭代次数
         mean_iterations = ICP_iterations.mean()

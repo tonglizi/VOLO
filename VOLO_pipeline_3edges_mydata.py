@@ -154,7 +154,7 @@ def main():
     if args.mapping is True:
         Map = MappingManager()
 
-    # for save the results as a video
+    # for save the result as a video
     fig_idx = 1
     fig = plt.figure(fig_idx)
     writer = FFMpegWriter(fps=15)
