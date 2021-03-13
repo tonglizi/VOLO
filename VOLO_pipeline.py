@@ -248,7 +248,6 @@ def main():
             elif args.proposal == 2:
                 init_pose = rel_VO_pose
 
-            print(init_pose)
             startTime = time.time()
             if args.scan2submap:
                 submap = Map.getSubMap()
@@ -260,7 +259,6 @@ def main():
                                                           tolerance=args.tolerance,
                                                           max_iterations=50)
 
-            print(rel_LO_pose)
             ICP_iteration_time[j] = time.time() - startTime
 
             ICP_iterations[j] = iterations
