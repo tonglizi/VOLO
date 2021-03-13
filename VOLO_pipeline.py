@@ -9,16 +9,13 @@
 --isKitti:适用于带有位姿真值的kitti测试集；能够额外输出和真值比较得到误差
 '''
 import hashlib
-import random
 import torch
 from path import Path
 import argparse
-import numpy as np
 from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
 
-# from modules.ICP import icp
-from modules.ICPRegistration import icp
+from modules.ICP import icp
 from modules.PointCloudMapping import MappingManager
 from models import PoseExpNet
 from utils.InverseWarp import pose_vec2mat
@@ -148,10 +145,18 @@ def main():
     last_rel_LO_pose = np.identity(4)
     last_rel_VO_pose = np.identity(4)
     ##############################################################
-    '''创建输出文件夹位置'''
+    '''创建输出文件夹位置及文件后缀'''
     save_dir = Path(save_dir)
     print('Output files wiil be saved in： ' + save_dir)
     if not os.path.exists(save_dir): save_dir.makedirs_p()
+    suffix = "prop@" + str(args.proposal) + \
+             "_pts@" + str(args.num_icp_points) + \
+             "_tolerance@" + str(args.tolerance) + \
+             "_scm@" + str(args.scm_type) + \
+             "_thresh@" + str(args.loop_threshold)
+    if args.scan2submap:
+        suffix=suffix+'_scan2map@True'
+
     '''Pose Graph Manager (for back-end optimization) initialization'''
     PGM = PoseGraphManager()
     PGM.addPriorFactor()
@@ -174,9 +179,7 @@ def main():
     fig_idx = 1
     fig = plt.figure(fig_idx)
     writer = FFMpegWriter(fps=15)
-    vedio_name = "pts@" + str(args.num_icp_points) + "_prop@" + str(
-        args.proposal) + "_tolerance@" + str(
-        args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(args.loop_threshold) + ".mp4"
+    vedio_name = suffix + ".mp4"
     vedio_path = os.path.join(save_dir, vedio_name)
     num_frames_to_skip_to_show = 5
     num_frames_to_save = np.floor(num_frames / num_frames_to_skip_to_show)
@@ -184,7 +187,7 @@ def main():
 
         for j, sample in enumerate(tqdm(framework)):
             '''
-            ***************************************VO部分*******************************************
+            ***********************************VO部分*********************************
             '''
             # 图像降采样
             imgs = sample['imgs']
@@ -249,20 +252,18 @@ def main():
             startTime = time.time()
             if args.scan2submap:
                 submap = Map.getSubMap()
-                # rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
-                #                                           tolerance=args.tolerance,
-                #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, submap, trans_init=init_pose)
+                rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
+                                                          tolerance=args.tolerance,
+                                                          max_iterations=50)
             else:
-                # rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
-                #                                           tolerance=args.tolerance,
-                #                                           max_iterations=50)
-                rel_LO_pose, _, distacnces, iterations = icp(curr_pts, last_pts, trans_init=init_pose)
+                rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
+                                                          tolerance=args.tolerance,
+                                                          max_iterations=50)
 
             print(rel_LO_pose)
             ICP_iteration_time[j] = time.time() - startTime
 
-            # ICP_iterations[j] = iterations
+            ICP_iterations[j] = iterations
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
             last_pts = curr_pts
@@ -316,31 +317,22 @@ def main():
                 Map.vizMapWithOpen3D()
 
         if args.mapping is True:
-            map_name = 'pts@' + str(args.num_icp_points) + "_prop@" + str(
-                args.proposal) + "_tolerance@" + str(args.tolerance) + "_scm@" + str(args.scm_type) + "_thresh@" + str(
-                args.loop_threshold) + '.pcd'
+            map_name = suffix + '.pcd'
             map_path = os.path.join(save_dir, map_name)
             Map.saveMap2File(map_path)
 
         if args.output_dir is not None:
             # np.save(output_dir / 'predictions.npy', predictions_array)
-            np.savetxt(save_dir / 'scale_factors.txt', scale_factors)
+            np.savetxt(save_dir / 'scale_factors_' + suffix + '.txt', scale_factors)
             np.savetxt(save_dir / 'rel_VO_poses.txt', rel_VO_poses)
             np.savetxt(save_dir / 'abs_VO_poses.txt', abs_VO_poses)
-            if args.proposal == 0:
-                rel_LO_poses_file = 'rel_LO_poses_proposal@0.txt'
-                abs_LO_poses_file = 'abs_LO_poses_proposal@0.txt'
-            elif args.proposal == 1:
-                rel_LO_poses_file = 'rel_LO_poses_proposal@1.txt'
-                abs_LO_poses_file = 'abs_LO_poses_proposal@1.txt'
-            elif args.proposal == 2:
-                rel_LO_poses_file = 'rel_LO_poses_proposal@2.txt'
-                abs_LO_poses_file = 'abs_LO_poses_proposal@2.txt'
+            rel_LO_poses_file = 'rel_LO_poses_' + suffix + '.txt'
+            abs_LO_poses_file = 'abs_LO_poses_' + suffix + '.txt'
             ResultSaver.saveRelativePosesResult(rel_LO_poses_file)
             ResultSaver.saveFinalPoseGraphResult(abs_LO_poses_file)
-            np.savetxt(save_dir / 'iterations.txt', ICP_iterations)
+            np.savetxt(save_dir / 'iterations_'+suffix+'.txt', ICP_iterations)
             if args.isKitti:
-                np.savetxt(save_dir / 'est_poses.txt'.format(args.sequence_idx), est_poses)
+                np.savetxt(save_dir / 'est_poses_'+suffix+'.txt'.format(args.sequence_idx), est_poses)
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)
