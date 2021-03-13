@@ -149,13 +149,13 @@ def main():
     save_dir = Path(save_dir)
     print('Output files wiil be saved in： ' + save_dir)
     if not os.path.exists(save_dir): save_dir.makedirs_p()
-    suffix = "prop@" + str(args.proposal) + \
-             "_pts@" + str(args.num_icp_points) + \
+    suffix = "pts@" + str(args.num_icp_points) + \
+             "_prop@" + str(args.proposal) + \
              "_tolerance@" + str(args.tolerance) + \
              "_scm@" + str(args.scm_type) + \
              "_thresh@" + str(args.loop_threshold)
     if args.scan2submap:
-        suffix=suffix+'_scan2map@True'
+        suffix = suffix + '_scan2map@True'
 
     '''Pose Graph Manager (for back-end optimization) initialization'''
     PGM = PoseGraphManager()
@@ -330,9 +330,9 @@ def main():
             abs_LO_poses_file = 'abs_LO_poses_' + suffix + '.txt'
             ResultSaver.saveRelativePosesResult(rel_LO_poses_file)
             ResultSaver.saveFinalPoseGraphResult(abs_LO_poses_file)
-            np.savetxt(save_dir / 'iterations_'+suffix+'.txt', ICP_iterations)
+            np.savetxt(save_dir / 'iterations_' + suffix + '.txt', ICP_iterations)
             if args.isKitti:
-                np.savetxt(save_dir / 'est_poses_'+suffix+'.txt'.format(args.sequence_idx), est_poses)
+                np.savetxt(save_dir / 'est_poses_' + suffix + '.txt'.format(args.sequence_idx), est_poses)
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)
