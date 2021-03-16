@@ -2,6 +2,13 @@
 # @Time : 2021/3/12 10:26 
 # @Author : CaiXin
 # @File : ICPRegistrationTest.py
+'''
+测试得到的规律性结果：
+1. open3d的p2l ICP方法对预估非常敏感，较好的预估能够得到较好的结果；较差的预估会致使其非常容易陷入局部极值点
+2. myownicp对预估的敏感性相比之下不够高，可能会出现好的预估也不能导向非常好的jing 匹配结果，但是也有可能较差的预估却会得到一个好的结果
+3. 在转弯幅度较大的阶段，myownicp的相对鲁棒想要好，但是小转弯时，open3d icp鲁棒性更好
+'''
+
 import time
 
 from modules.ICPRegistration import *
@@ -96,8 +103,8 @@ def refine_registration_myownicp(source, target, trans_init, tolerance, max_iter
 
 
 def main():
-    source_array = readBinScan('E:/mydataset/sequences/20210315_174900/velodyne/0033.bin')
-    target_array = readBinScan('E:/mydataset/sequences/20210315_174900/velodyne/0032.bin')
+    source_array = readBinScan('E:/mydataset/sequences/20210315_170938/velodyne/0039.bin')
+    target_array = readBinScan('E:/mydataset/sequences/20210315_170938/velodyne/0037.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
@@ -111,17 +118,17 @@ def main():
     #     source, target, threshold, trans_init)
     # print(evaluation)
 
-    # 全局匹配
-    source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.45, coff=1.5)
-    target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.45, coff=1.5)
     voxel_size = 0.05
-    start = time.time()
-    result_ransac = execute_global_registration(source_down, target_down,
-                                                source_fpfh, target_fpfh,
-                                                voxel_size)
-    print("Global registration took %.3f sec.\n" % (time.time() - start))
-    print(result_ransac)
-    print(result_ransac.transformation)
+    # 全局匹配
+    # source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.45, coff=1.5)
+    # target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.45, coff=1.5)
+    # start = time.time()
+    # result_ransac = execute_global_registration(source_down, target_down,
+    #                                             source_fpfh, target_fpfh,
+    #                                             voxel_size)
+    # print("Global registration took %.3f sec.\n" % (time.time() - start))
+    # print(result_ransac)
+    # print(result_ransac.transformation)
     # draw_registration_result(source_down, target_down, result_ransac.transformation)
 
     # start = time.time()
@@ -135,13 +142,13 @@ def main():
 
     # ICP 精细匹配 point to Plane
     trans_init = np.identity(4)
-    trans_init[0, 3] = 0.5
+    trans_init[0, 3] = 0.08
 
     start = time.time()
-    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=1, max_nn=30))
-    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=1, max_nn=30))
+    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
+    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
     result_icp = refine_registration(source, target,
-                                     voxel_size, result_ransac.transformation)
+                                     voxel_size, trans_init)
     print("refine registration took %.3f sec.\n" % (time.time() - start))
     print(result_icp)
     print(result_icp.transformation)
@@ -154,11 +161,11 @@ def main():
     print(odo_result)
     draw_registration_result(source, target, odo_result)
 
-    start = time.time()
-    odo_result=refine_registration_myownicp(source_array,target_array,result_ransac.transformation,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
-    print("refine registration took %.3f sec.\n" % (time.time() - start))
-    print(odo_result)
-    draw_registration_result(source, target, odo_result)
+    # start = time.time()
+    # odo_result=refine_registration_myownicp(source_array,target_array,result_ransac.transformation,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
+    # print("refine registration took %.3f sec.\n" % (time.time() - start))
+    # print(odo_result)
+    # draw_registration_result(source, target, odo_result)
 
     # print("Apply point-to-point ICP")
     # reg_p2p = o3d.pipelines.registration.registration_icp(

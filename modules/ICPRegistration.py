@@ -8,7 +8,16 @@ The ICP module is based on Open3d API
 '''
 import copy
 import open3d as o3d
-import numpy as np
+
+
+def p2l_icp(source, target, trans_init, threshold,radius=4):
+    source = array_to_o3d_pointcloud(source)
+    target = array_to_o3d_pointcloud(target)
+    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=30))
+    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=30))
+    result_icp = refine_registration(source, target,
+                                     threshold, trans_init)
+    return result_icp.transformation, result_icp.fitness, result_icp.inlier_rmse
 
 
 def icp(source, target, trans_init, threshold=0.05, downsample_voxpel_size=0.2, coff=1.5, indoor=True):
@@ -25,8 +34,8 @@ def icp(source, target, trans_init, threshold=0.05, downsample_voxpel_size=0.2, 
     :param downsample_voxpel_size:
     :return:
     '''
-    source = array_to_o3d_pointcloud(source,isIndoor=indoor)
-    target = array_to_o3d_pointcloud(target,isIndoor=indoor)
+    source = array_to_o3d_pointcloud(source, isIndoor=indoor)
+    target = array_to_o3d_pointcloud(target, isIndoor=indoor)
 
     source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=downsample_voxpel_size, coff=coff)
     target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=downsample_voxpel_size, coff=coff)
@@ -60,7 +69,7 @@ def draw_registration_result(source, target, transformation):
                                       up=[-0.3402, -0.9189, -0.1996])
 
 
-def array_to_o3d_pointcloud(pointcloud_arr, robot_height=0.64,isIndoor=False, room_height=2.85):
+def array_to_o3d_pointcloud(pointcloud_arr, robot_height=0.64, isIndoor=False, room_height=2.85):
     # points removal: remove ground and top
     # pointcloud_filtered = []
     # for i in range(len(pointcloud_arr)):
@@ -127,10 +136,10 @@ def refine_registration(source, target, threshold, trans_init):
     # print(":: Point-to-plane ICP registration is applied on original point")
     # print("   clouds to refine the alignment. This time we use a strict")
     # print("   distance threshold %.3f." % distance_threshold)
-    loss = o3d.pipelines.registration.TukeyLoss(k=0.02)
+    loss = o3d.pipelines.registration.TukeyLoss(k=1)
     p2l = o3d.pipelines.registration.TransformationEstimationPointToPlane(loss)
     result = o3d.pipelines.registration.registration_icp(
         source, target, distance_threshold, trans_init,
         p2l,
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=50))
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000))
     return result

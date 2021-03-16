@@ -16,6 +16,7 @@ from matplotlib.animation import FFMpegWriter
 from tqdm import tqdm
 
 from modules.ICP import icp
+from modules.ICPRegistration import p2l_icp
 from modules.PointCloudMapping import MappingManager
 from models import PoseExpNet
 from utils.InverseWarp import pose_vec2mat
@@ -60,6 +61,8 @@ parser.add_argument('--isKitti', type=bool, default=False,
                     help="Only for KITTI dataset test, if not, then for mydataset")
 parser.add_argument('--scan2submap', type=bool, default=False,
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
+parser.add_argument('--icp-version', type=int, default=0,
+                    help="options for ICP implementations: 0 is my own, 1 is from open3d ")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -127,6 +130,7 @@ def main():
     '''效率'''
     VO_processing_time = np.zeros(num_poses - 1)
     ICP_iterations = np.zeros(num_poses - 1)
+    ICP_fitness = np.zeros(num_poses - 1)
     ICP_iteration_time = np.zeros(num_poses - 1)
     '''绝对位姿列表初始化'''
     # 对齐到雷达坐标系，VO模型输出的带有尺度的绝对位姿
@@ -222,7 +226,7 @@ def main():
             #     scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
 
             # version2.0 固定模型的尺度因子
-            scale_factor=13.5
+            scale_factor = 13.5
 
             scale_factors[j] = scale_factor
             last_rel_VO_pose = copy.deepcopy(rel_VO_pose)  # 注意深拷贝
@@ -253,20 +257,31 @@ def main():
             elif args.proposal == 2:
                 init_pose = rel_VO_pose
 
+            '''icp 类型选择2*2=4'''
             startTime = time.time()
             if args.scan2submap:
                 submap = Map.getSubMap()
-                rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
-                                                          tolerance=args.tolerance,
-                                                          max_iterations=50)
+                if args.icp_version == 0:
+                    rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
+                                                              tolerance=args.tolerance,
+                                                              max_iterations=50)
+                elif args.icp_version == 1:
+                    rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=init_pose, threshold=0.05)
             else:
-                rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
-                                                          tolerance=args.tolerance,
-                                                          max_iterations=50)
+                if args.icp_version == 0:
+                    rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
+                                                              tolerance=args.tolerance,
+                                                              max_iterations=50)
+                elif args.icp_version == 1:
+                    rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, last_pts, trans_init=init_pose,
+                                                                threshold=0.05)
 
             ICP_iteration_time[j] = time.time() - startTime
 
-            ICP_iterations[j] = iterations
+            if args.icp_version == 0:
+                ICP_iterations[j] = iterations
+            elif args.icp_version == 1:
+                ICP_fitness[j] = fitness
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
             last_pts = curr_pts
@@ -333,7 +348,10 @@ def main():
             abs_LO_poses_file = 'abs_LO_poses_' + suffix + '.txt'
             ResultSaver.saveRelativePosesResult(rel_LO_poses_file)
             ResultSaver.saveFinalPoseGraphResult(abs_LO_poses_file)
-            np.savetxt(save_dir / 'iterations_' + suffix + '.txt', ICP_iterations)
+            if args.icp_version == 0:
+                np.savetxt(save_dir / 'iterations_' + suffix + '.txt', ICP_iterations)
+            elif args.icp_version == 1:
+                np.savetxt(save_dir / 'fitness_' + suffix + '.txt', ICP_fitness)
             np.savetxt(save_dir / 'iteration_time_' + suffix + '.txt', ICP_iteration_time)
             if args.isKitti:
                 np.savetxt(save_dir / 'est_poses_' + suffix + '.txt'.format(args.sequence_idx), est_poses)
@@ -360,7 +378,7 @@ def main():
 
         # 存储优化前后误差精度指标
         if args.isKitti:
-            err_statics=np.array([mean_errors,std_errors,optimized_mean_errors,optimized_std_errors])
+            err_statics = np.array([mean_errors, std_errors, optimized_mean_errors, optimized_std_errors])
             np.savetxt(save_dir / 'err_statics_' + suffix + '.txt'.format(args.sequence_idx), err_statics)
 
         # 迭代次数
