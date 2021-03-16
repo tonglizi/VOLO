@@ -57,6 +57,7 @@ parser.add_argument('--sequence_idx', type=str, default='09')
 parser.add_argument('--save_gap', type=int, default=300)
 parser.add_argument('--mapping', type=bool, default=True, help="build real-time map")
 parser.add_argument('--vizmapping', type=bool, default=False, help="display the real-time map")
+parser.add_argument('--map-down-points', type=int, default=200, help="mapping density")
 parser.add_argument('--isKitti', type=bool, default=False,
                     help="Only for KITTI dataset test, if not, then for mydataset")
 parser.add_argument('--scan2submap', type=bool, default=False,
@@ -244,7 +245,7 @@ def main():
                 last_pts = pointClouds[j]
                 SCM.addNode(j, last_pts)
                 if args.mapping is True:
-                    Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=100,
+                    Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=args.map_down_points,
                                   submap_points=args.num_icp_points)
 
             curr_pts = pointClouds[j + 1]
@@ -306,7 +307,7 @@ def main():
 
             # 建图更新
             if args.mapping is True:
-                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=100,
+                Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=args.map_down_points,
                               submap_points=args.num_icp_points)
 
             # loop detection and optimize the graph

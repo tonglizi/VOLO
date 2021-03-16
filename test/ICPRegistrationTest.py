@@ -103,8 +103,8 @@ def refine_registration_myownicp(source, target, trans_init, tolerance, max_iter
 
 
 def main():
-    source_array = readBinScan('E:/mydataset/sequences/20210315_170938/velodyne/0039.bin')
-    target_array = readBinScan('E:/mydataset/sequences/20210315_170938/velodyne/0037.bin')
+    source_array = readBinScan('E:/mydataset/sequences/20210315_170122/velodyne/0039.bin')
+    target_array = readBinScan('E:/mydataset/sequences/20210315_170122/velodyne/0037.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
@@ -142,7 +142,7 @@ def main():
 
     # ICP 精细匹配 point to Plane
     trans_init = np.identity(4)
-    trans_init[0, 3] = 0.08
+    trans_init[0, 3] = 0
 
     start = time.time()
     source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
