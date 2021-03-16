@@ -4,6 +4,7 @@
 interpreter="python3.6"
 script="VOLO_pipeline.py"
 useScanToMap=0
+icp_version=1
 
 model_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/checkpoints/
 pretrained_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/SfmLearner_Models/
@@ -111,16 +112,16 @@ for model in ${vo_models_for_mydataset[@]}; do
     for num_points in ${num_icp_points[@]}; do
       if useScanToMap==0; then
         # no vo proposal
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]}
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --icp-version $icp_version
 
         # with vo proposal
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]}
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --icp-version $icp_version
       else
         # no vo proposal with scan2submap
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --icp-version $icp_version
 
         # with vo proposal with scan2submap
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $mydataset_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --icp-version $icp_version
       fi
     done
   done
@@ -132,16 +133,16 @@ for model in ${vo_models_for_kitti[@]}; do
     for num_points in ${num_icp_points[@]}; do
       if useScanToMap==0; then
         # no vo proposal
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
 
         # with vo proposal
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
       else
         # no vo proposal with scan2submap
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
 
         # with vo proposal with scan2submap
-        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True
+        $interpreter $script $model_dir$model'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
       fi
     done
   done
@@ -154,16 +155,16 @@ for data_seq in ${kittidataset[@]}; do
   for num_points in ${num_icp_points[@]}; do
     if useScanToMap==0; then
       # no vo proposal
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True
+      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
 
       # with vo proposal
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True
+      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
     else
       # no vo proposal with scan2submap
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True
+      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
 
       # with vo proposal with scan2submap
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True
+      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
     fi
   done
 done
