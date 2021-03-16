@@ -251,7 +251,7 @@ def main():
 
             # 选择LO的初值预估，分别是无预估，上一帧位姿，VO位姿
             if args.proposal == 0:
-                init_pose = None
+                init_pose = np.identity(4)
             elif args.proposal == 1:
                 init_pose = last_rel_LO_pose
             elif args.proposal == 2:
