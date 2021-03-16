@@ -241,13 +241,13 @@ def main():
             '''*************************LO部分******************************************'''
             # 初始化
             if j == 0:
-                last_pts = random_sampling(pointClouds[j], args.num_icp_points)
+                last_pts = pointClouds[j]
                 SCM.addNode(j, last_pts)
                 if args.mapping is True:
                     Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=100,
                                   submap_points=args.num_icp_points)
 
-            curr_pts = random_sampling(pointClouds[j + 1], args.num_icp_points)
+            curr_pts = pointClouds[j + 1]
 
             # 选择LO的初值预估，分别是无预估，上一帧位姿，VO位姿
             if args.proposal == 0:
@@ -262,6 +262,7 @@ def main():
             if args.scan2submap:
                 submap = Map.getSubMap()
                 if args.icp_version == 0:
+                    curr_pts = random_sampling(curr_pts, args.num_icp_points)
                     rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=init_pose,
                                                               tolerance=args.tolerance,
                                                               max_iterations=50)
@@ -269,6 +270,8 @@ def main():
                     rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=init_pose, threshold=0.05)
             else:
                 if args.icp_version == 0:
+                    curr_pts = random_sampling(curr_pts, args.num_icp_points)
+                    last_pts = random_sampling(last_pts, args.num_icp_points)
                     rel_LO_pose, distacnces, iterations = icp(curr_pts, last_pts, init_pose=init_pose,
                                                               tolerance=args.tolerance,
                                                               max_iterations=50)
