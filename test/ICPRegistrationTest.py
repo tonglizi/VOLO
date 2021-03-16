@@ -5,11 +5,12 @@
 import time
 
 from modules.ICPRegistration import *
-from utils.UtilsPointcloud import readBinScan
+from utils.UtilsPointcloud import readBinScan, random_sampling
 import numpy as np
+from modules.ICP import icp
 
 
-def array_to_o3d_pointcloud(pointcloud_arr, robot_height=0.64,isIndoor=False, room_height=2.85):
+def array_to_o3d_pointcloud(pointcloud_arr, robot_height=0.64, isIndoor=False, room_height=2.85):
     # points removal: remove ground and top
     # pointcloud_filtered = []
     # for i in range(len(pointcloud_arr)):
@@ -76,24 +77,33 @@ def refine_registration(source, target, voxel_size, trans_init):
     # print(":: Point-to-plane ICP registration is applied on original point")
     # print("   clouds to refine the alignment. This time we use a strict")
     # print("   distance threshold %.3f." % distance_threshold)
-    loss = o3d.pipelines.registration.TukeyLoss(k=0.02)
-    p2l = o3d.pipelines.registration.TransformationEstimationPointToPlane(loss)
+    loss = o3d.pipelines.registration.TukeyLoss(k=1)
+    p2l = o3d.pipelines.registration.TransformationEstimationPointToPlane()
     result = o3d.pipelines.registration.registration_icp(
         source, target, distance_threshold, trans_init,
         p2l,
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=50))
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000))
     return result
 
 
+def refine_registration_myownicp(source, target, trans_init, tolerance, max_iteration=50, num_icp_points=10000):
+    source_down = random_sampling(source, num_icp_points)
+    tarhet_down = random_sampling(target, num_icp_points)
+    rel_LO_pose, distacnces, iterations = icp(source_down, tarhet_down, init_pose=trans_init,
+                                              tolerance=tolerance,
+                                              max_iterations=max_iteration)
+    return rel_LO_pose
+
+
 def main():
-    source = readBinScan('E:/mydataset/sequences/20210113@3thFloorCube_3.3Hz/velodyne/0105.bin')
-    target = readBinScan('E:/mydataset/sequences/20210113@3thFloorCube_3.3Hz/velodyne/0104.bin')
+    source_array = readBinScan('E:/mydataset/sequences/20210315_174900/velodyne/0033.bin')
+    target_array = readBinScan('E:/mydataset/sequences/20210315_174900/velodyne/0032.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
 
-    source = array_to_o3d_pointcloud(source)
-    target = array_to_o3d_pointcloud(target)
+    source = array_to_o3d_pointcloud(source_array)
+    target = array_to_o3d_pointcloud(target_array)
 
     # draw_registration_result(source, target, trans_init)
     # print("Initial alignment")
@@ -102,8 +112,8 @@ def main():
     # print(evaluation)
 
     # 全局匹配
-    source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.20, coff=1.5)
-    target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.20, coff=1.5)
+    source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.45, coff=1.5)
+    target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.45, coff=1.5)
     voxel_size = 0.05
     start = time.time()
     result_ransac = execute_global_registration(source_down, target_down,
@@ -112,9 +122,7 @@ def main():
     print("Global registration took %.3f sec.\n" % (time.time() - start))
     print(result_ransac)
     print(result_ransac.transformation)
-    draw_registration_result(source_down, target_down, result_ransac.transformation)
-
-
+    # draw_registration_result(source_down, target_down, result_ransac.transformation)
 
     # start = time.time()
     # result_fast = execute_fast_global_registration(source_down, target_down,
@@ -128,15 +136,29 @@ def main():
     # ICP 精细匹配 point to Plane
     trans_init = np.identity(4)
     trans_init[0, 3] = 0.5
+
     start = time.time()
-    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
-    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
+    source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=1, max_nn=30))
+    target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=1, max_nn=30))
     result_icp = refine_registration(source, target,
                                      voxel_size, result_ransac.transformation)
     print("refine registration took %.3f sec.\n" % (time.time() - start))
     print(result_icp)
     print(result_icp.transformation)
     draw_registration_result(source, target, result_icp.transformation)
+
+
+    start = time.time()
+    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
+    print("refine registration took %.3f sec.\n" % (time.time() - start))
+    print(odo_result)
+    draw_registration_result(source, target, odo_result)
+
+    start = time.time()
+    odo_result=refine_registration_myownicp(source_array,target_array,result_ransac.transformation,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
+    print("refine registration took %.3f sec.\n" % (time.time() - start))
+    print(odo_result)
+    draw_registration_result(source, target, odo_result)
 
     # print("Apply point-to-point ICP")
     # reg_p2p = o3d.pipelines.registration.registration_icp(
