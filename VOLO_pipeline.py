@@ -226,7 +226,7 @@ def main():
             #     scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
 
             # version2.0 固定模型的尺度因子
-            scale_factor = 13.5
+            scale_factor = 7
 
             scale_factors[j] = scale_factor
             last_rel_VO_pose = copy.deepcopy(rel_VO_pose)  # 注意深拷贝
