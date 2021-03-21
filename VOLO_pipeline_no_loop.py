@@ -45,6 +45,12 @@ parser.add_argument("--rotation-mode", default='euler', choices=['euler', 'quat'
 parser.add_argument('--num_icp_points', type=int, default=5000)  # 5000 is enough for real time
 parser.add_argument('--proposal', type=int, default=2)
 parser.add_argument('--tolerance', type=float, default=0.001)
+parser.add_argument('--scm_type', type=str, default='ring')
+parser.add_argument('--num_rings', type=int, default=20)  # same as the original paper
+parser.add_argument('--num_sectors', type=int, default=60)  # same as the original paper
+parser.add_argument('--num_candidates', type=int, default=10)  # must be int
+parser.add_argument('--try_gap_loop_detection', type=int, default=10)  # same as the original paper
+parser.add_argument('--loop_threshold', type=float, default=0.11)  # 0.11 for sc, 0.015 for expand
 parser.add_argument('--data_base_dir', type=str,
                     default='/your/path/.../data_odometry_velodyne/dataset/sequences')
 parser.add_argument('--sequence_idx', type=str, default='09')
