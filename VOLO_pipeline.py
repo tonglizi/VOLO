@@ -62,7 +62,7 @@ parser.add_argument('--isKitti', type=bool, default=False,
                     help="Only for KITTI dataset test, if not, then for mydataset")
 parser.add_argument('--scan2submap', type=bool, default=False,
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
-parser.add_argument('--icp-version', type=int, default=0,
+parser.add_argument('--icp-version', type=int, default=1,
                     help="options for ICP implementations: 0 is my own, 1 is from open3d ")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -336,9 +336,9 @@ def main():
 
             # save the ICP odometry pose result (no loop closure)
             ResultSaver.saveUnoptimizedPoseGraphResult(PGM.curr_se3, PGM.curr_node_idx)
-            if (j % num_frames_to_skip_to_show == 0):
-                ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
-                writer.grab_frame()
+            # if (j % num_frames_to_skip_to_show == 0):
+            #     ResultSaver.vizCurrentTrajectory(fig_idx=fig_idx)
+            #     writer.grab_frame()
             if args.vizmapping is True:
                 Map.vizMapWithOpen3D()
 

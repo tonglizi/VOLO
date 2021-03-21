@@ -39,6 +39,7 @@ vo_models_for_mydataset=(
 # 包括原生模型*1和新模型*1在KITTI训练集上训练的model
 vo_models_for_kitti=(
   "data,500epochs,epoch_size3000,b32,m0.2/06-17-04_17/"
+  "data,b16,lr0.0004/03-09-11:53"
 )
 #mydataset=(
 #  20210308_184153
@@ -53,61 +54,61 @@ vo_models_for_kitti=(
 #  20210308_184607
 #  20210308_184904)
 
-mydataset=(
-  20210315_163543
-  20210315_164054
-  20210315_164326
-  20210315_164900
-  20210315_165031
-  20210315_165219
-  20210315_165342
-  20210315_165519
-  20210315_165644
-  20210315_165815
-  20210315_165951
-  20210315_170122
-  20210315_170253
-  20210315_170434
-  20210315_170938
-  20210315_171127
-  20210315_171302
-  20210315_171424
-  20210315_171600
-  20210315_171724
-  20210315_171849
-  20210315_172023
-  20210315_172155
-  20210315_172318
-  20210315_172450
-  20210315_172614
-  20210315_172806
-  20210315_172925
-  20210315_173052
-  20210315_173218
-  20210315_173403
-  20210315_173520
-  20210315_173656
-  20210315_173824
-  20210315_173951
-  20210315_174119
-  20210315_174240
-  20210315_174502
-  20210315_174658
-  20210315_174900
-  20210315_175029
-  20210315_175151
-  20210315_175525
-  20210315_175643
-  20210315_175803
-  20210315_175941
-  20210315_180145
-  20210315_180323
-  20210315_180443
-  20210315_180608)
+#mydataset=(
+#  20210315_163543
+#  20210315_164054
+#  20210315_164326
+#  20210315_164900
+#  20210315_165031
+#  20210315_165219
+#  20210315_165342
+#  20210315_165519
+#  20210315_165644
+#  20210315_165815
+#  20210315_165951
+#  20210315_170122
+#  20210315_170253
+#  20210315_170434
+#  20210315_170938
+#  20210315_171127
+#  20210315_171302
+#  20210315_171424
+#  20210315_171600
+#  20210315_171724
+#  20210315_171849
+#  20210315_172023
+#  20210315_172155
+#  20210315_172318
+#  20210315_172450
+#  20210315_172614
+#  20210315_172806
+#  20210315_172925
+#  20210315_173052
+#  20210315_173218
+#  20210315_173403
+#  20210315_173520
+#  20210315_173656
+#  20210315_173824
+#  20210315_173951
+#  20210315_174119
+#  20210315_174240
+#  20210315_174502
+#  20210315_174658
+#  20210315_174900
+#  20210315_175029
+#  20210315_175151
+#  20210315_175525
+#  20210315_175643
+#  20210315_175803
+#  20210315_175941
+#  20210315_180145
+#  20210315_180323
+#  20210315_180443
+#  20210315_180608)
 
 #kittidataset=(00 01 02 03 04 05 06 07 08 09 10)
-#kittidataset=(00 02 05 08)
-#kittidataset=(08 09)
+kittidataset=(00 02 05 08 09)
+
 # 自建数据集测试:(10+1)*7*1=77组
 # shellcheck disable=SC2068
 for model in ${vo_models_for_mydataset[@]}; do
@@ -153,21 +154,21 @@ done
 
 # 预训练模型在Kitti上的表现：1*11*1=11组
 # shellcheck disable=SC2068
-for data_seq in ${kittidataset[@]}; do
-  # shellcheck disable=SC2068
-  for num_points in ${num_icp_points[@]}; do
-    if useScanToMap==0; then
-      # no vo proposal
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
-
-      # with vo proposal
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
-    else
-      # no vo proposal with scan2submap
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
-
-      # with vo proposal with scan2submap
-      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
-    fi
-  done
-done
+#for data_seq in ${kittidataset[@]}; do
+#  # shellcheck disable=SC2068
+#  for num_points in ${num_icp_points[@]}; do
+#    if useScanToMap==0; then
+#      # no vo proposal
+#      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
+#
+#      # with vo proposal
+#      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --isKitti True --icp-version $icp_version
+#    else
+#      # no vo proposal with scan2submap
+#      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 0 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
+#
+#      # with vo proposal with scan2submap
+#      $interpreter $script $pretrained_dir'exp_pose_model_best.pth.tar' --dataset-dir $kittidata_dir --sequence_idx $data_seq --proposal 2 --tolerance 0.0005 --loop_threshold 0 --num_icp_points $num_points --scm_type ${scm_type[0]} --scan2submap True --isKitti True --icp-version $icp_version
+#    fi
+#  done
+#done

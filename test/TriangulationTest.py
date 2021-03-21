@@ -15,10 +15,10 @@ def array_to_o3d_pointcloud(pointcloud_arr):
     return pointcloud
 
 def main():
-    # pcd = o3d.io.read_point_cloud('')
-    pcd = readBinScan('E:/mydataset/sequences/20210302_164405/velodyne/0000.bin')
-    pcd = array_to_o3d_pointcloud(pcd)
-    pcd = pcd.voxel_down_sample(voxel_size=0.05)
+    pcd = o3d.io.read_point_cloud('D:\/Projects\/VOLO\/result\/mydataset_v3\/20210315_174658\/net_f89932606d8e2fb945ffd842b90ec631/pts@10000_prop@2_tolerance@0.0005_scm@ring_thresh@0.0.pcd')
+    # pcd = readBinScan('E:/mydataset/sequences/20210302_164405/velodyne/0000.bin')
+    # pcd = array_to_o3d_pointcloud(pcd)
+    # pcd = pcd.voxel_down_sample(voxel_size=0.05)
     pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
 
     # estimate radius for rolling ball
