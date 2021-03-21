@@ -107,7 +107,7 @@ vo_models_for_kitti=(
 #  20210315_180608)
 
 #kittidataset=(00 01 02 03 04 05 06 07 08 09 10)
-kittidataset=(00 02 05 08 09)
+kittidataset=(09 02 00 05 08)
 
 # 自建数据集测试:(10+1)*7*1=77组
 # shellcheck disable=SC2068
@@ -132,8 +132,9 @@ for model in ${vo_models_for_mydataset[@]}; do
 done
 # kitti数据集:(1+1)*11*1=22组
 # shellcheck disable=SC2068
-for model in ${vo_models_for_kitti[@]}; do
-  for data_seq in ${kittidataset[@]}; do
+
+for data_seq in ${kittidataset[@]}; do
+  for model in ${vo_models_for_kitti[@]}; do
     for num_points in ${num_icp_points[@]}; do
       if useScanToMap==0; then
         # no vo proposal
