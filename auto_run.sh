@@ -2,7 +2,7 @@
 #主要控制参数是：点云降采样数目(影响速度)，以及是否采用scan to map的配齐方法（同样影响速度）
 # 对于跑完一个period,需要（77+22+11）*2=220个测试，每个测试10分钟左右；一共需要36h
 interpreter="python3.6"
-script="VOLO_pipeline.py"
+script="VOLO_pipeline_no_loop.py"
 useScanToMap=0
 icp_version=0
 
