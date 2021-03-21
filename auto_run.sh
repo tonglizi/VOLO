@@ -4,7 +4,7 @@
 interpreter="python3.6"
 script="VOLO_pipeline.py"
 useScanToMap=0
-icp_version=1
+icp_version=0
 
 model_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/checkpoints/
 pretrained_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/SfmLearner_Models/
@@ -12,7 +12,7 @@ pretrained_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/SfmLearner_Models/
 mydataset_dir=/home/sda/mydataset/
 kittidata_dir=/home/sda/dataset
 
-num_icp_points=(20000) #(10000 20000)
+num_icp_points=(10000) #(10000 20000)
 scm_type=(ring vertical combined)
 
 # 包括原生模型*1和新模型*10在训练集上训练的model
