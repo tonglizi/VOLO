@@ -30,7 +30,6 @@ def loadPointCloud(rootdir):
             scan = np.fromfile(rootdir + "/" + file, dtype=np.float32)
             scan = scan.reshape((-1, 4))
             ptcloud_xyz = scan[:, :-1]
-            print(ptcloud_xyz.shape)
             pointclouds.append(ptcloud_xyz)
     return pointclouds
     

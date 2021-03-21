@@ -270,6 +270,8 @@ def main():
                                                               tolerance=args.tolerance,
                                                               max_iterations=50)
                 elif args.icp_version == 1:
+                    if args.isKitti:
+                        curr_pts = random_sampling(curr_pts, args.num_icp_points)
                     rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=init_pose, threshold=0.05)
             else:
                 if args.icp_version == 0:
@@ -279,6 +281,9 @@ def main():
                                                               tolerance=args.tolerance,
                                                               max_iterations=50)
                 elif args.icp_version == 1:
+                    if args.isKitti:
+                        curr_pts = random_sampling(curr_pts, args.num_icp_points)
+                        last_pts = random_sampling(last_pts, args.num_icp_points)
                     rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, last_pts, trans_init=init_pose,
                                                                 threshold=0.05)
 
