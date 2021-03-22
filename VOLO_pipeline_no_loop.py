@@ -413,7 +413,7 @@ def compute_pose_error(gt, pred):
     RE = 0
     snippet_length = gt.shape[0]
     scale_factor = np.sum(gt[:, :, -1] * pred[:, :, -1]) / np.sum(pred[:, :, -1] ** 2)
-    # print("scale_factor: %s", scale_factor)
+    print("scale_factor: %s", scale_factor)
     ATE = np.linalg.norm((gt[:, :, -1] - scale_factor * pred[:, :, -1]).reshape(-1))
     for gt_pose, pred_pose in zip(gt, pred):
         # Residual matrix to which we compute angle's sin and cos
