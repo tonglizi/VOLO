@@ -217,7 +217,10 @@ def main():
             #     scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
 
             # version2.0 固定模型的尺度因子
-            scale_factor = 7
+            if args.isKitti:
+                scale_factor = 35
+            else:
+                scale_factor = 7
 
             scale_factors[j] = scale_factor
             last_rel_VO_pose = copy.deepcopy(rel_VO_pose)  # 注意深拷贝
@@ -413,7 +416,7 @@ def compute_pose_error(gt, pred):
     RE = 0
     snippet_length = gt.shape[0]
     scale_factor = np.sum(gt[:, :, -1] * pred[:, :, -1]) / np.sum(pred[:, :, -1] ** 2)
-    print("scale_factor: %s", scale_factor)
+    # print("scale_factor: %s", scale_factor)
     ATE = np.linalg.norm((gt[:, :, -1] - scale_factor * pred[:, :, -1]).reshape(-1))
     for gt_pose, pred_pose in zip(gt, pred):
         # Residual matrix to which we compute angle's sin and cos
