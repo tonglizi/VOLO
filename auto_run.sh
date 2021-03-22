@@ -38,8 +38,8 @@ vo_models_for_mydataset=(
 
 # 包括原生模型*1和新模型*1在KITTI训练集上训练的model
 vo_models_for_kitti=(
-  "data,500epochs,epoch_size3000,b32,m0.2/06-17-04_17/"
-  "data,b16,lr0.0004/03-09-11:53"
+#  "data,500epochs,epoch_size3000,b32,m0.2/06-17-04_17/"
+  "data,b16,lr0.0004/03-09-11:53/"
 )
 #mydataset=(
 #  20210308_184153
