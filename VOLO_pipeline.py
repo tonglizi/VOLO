@@ -221,16 +221,18 @@ def main():
             rel_VO_pose[:3, :] = final_poses[1]
             # 尺度因子的确定：采用上一帧的LO输出位姿和VO输出位姿的尺度比值作为当前帧的尺度因子，初始尺度为1
             # version1.0
-            # if j == 0:
-            #     scale_factor = 7
-            # else:
-            #     scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
-
-            # version2.0 固定模型的尺度因子
             if args.isKitti:
-                scale_factor = 35
+                if j == 0:
+                    scale_factor = 7
+                else:
+                    scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
             else:
-                scale_factor = 7
+                scale_factor=7
+            # version2.0 固定模型的尺度因子
+            # if args.isKitti:
+            #     scale_factor = 35
+            # else:
+            #     scale_factor = 7
 
             scale_factors[j] = scale_factor
             last_rel_VO_pose = copy.deepcopy(rel_VO_pose)  # 注意深拷贝
