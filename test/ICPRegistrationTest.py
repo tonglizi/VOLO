@@ -103,8 +103,8 @@ def refine_registration_myownicp(source, target, trans_init, tolerance, max_iter
 
 
 def main():
-    source_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000200.bin')
-    target_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000199.bin')
+    source_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000230.bin')
+    target_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000229.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
@@ -120,8 +120,8 @@ def main():
 
     voxel_size = 0.05
     # 全局匹配
-    # source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.45, coff=1.5)
-    # target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.45, coff=1.5)
+    # source_down, source_fpfh = preprocess_point_cloud(source, voxel_size=0.2, coff=1.5)
+    # target_down, target_fpfh = preprocess_point_cloud(target, voxel_size=0.2, coff=1.5)
     # start = time.time()
     # result_ransac = execute_global_registration(source_down, target_down,
     #                                             source_fpfh, target_fpfh,
@@ -144,7 +144,10 @@ def main():
     trans_init = np.identity(4)
     trans_init[0, 3] = 0.5
 
+
     start = time.time()
+    # source=source.voxel_down_sample(0.25)
+    # target=target.voxel_down_sample(0.25)
     source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
     target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=4, max_nn=30))
     result_icp = refine_registration(source, target,
@@ -156,7 +159,7 @@ def main():
 
 
     start = time.time()
-    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=20000)
+    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=50000)
     print("refine registration took %.3f sec.\n" % (time.time() - start))
     print(odo_result)
     draw_registration_result(source, target, odo_result)
