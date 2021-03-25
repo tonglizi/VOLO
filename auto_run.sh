@@ -4,7 +4,7 @@
 interpreter="python3.6"
 script="VOLO_pipeline_no_loop.py"
 useScanToMap=0
-icp_version=0
+icp_version=1
 
 model_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/checkpoints/
 pretrained_dir=/home/cx/SLAM/SfmLearner-Pytorch-master_new/SfmLearner_Models/
@@ -33,6 +33,7 @@ scm_type=(ring vertical combined)
 #  vo_models_for_mydataset=(
 #  "data,b16,lr0.0004,m0.2/01-18-16:09/")
 vo_models_for_mydataset=(
+"data,b16,lr0.0004,m0.2/01-18-16:09/"
   "data,b16,lr0.0004/03-05-09:54/"
   "data,b16,lr0.0001/03-06-18:58/")
 
@@ -106,8 +107,31 @@ vo_models_for_kitti=(
 #  20210315_180443
 #  20210315_180608)
 
+mydataset=(
+20210325_144853
+20210325_145355
+20210325_145648
+20210325_145945
+20210325_150309
+20210325_150703
+20210325_151231
+20210325_151619
+20210325_151919
+20210325_152221
+20210325_152649
+20210325_153417
+20210325_153937
+20210325_154424
+20210325_154858
+20210325_155359
+20210325_155829
+20210325_160304
+20210325_160741
+20210325_161230
+)
+
 #kittidataset=(00 01 02 03 04 05 06 07 08 09 10)
-kittidataset=(09 02 00 05 08)
+#kittidataset=(09 02 00 05 08)
 
 # 自建数据集测试:(10+1)*7*1=77组
 # shellcheck disable=SC2068
