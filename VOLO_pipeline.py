@@ -270,8 +270,8 @@ def main():
             elif args.proposal == 2:
                 init_pose = rel_VO_pose
 
-            print('init_pose')
-            print(init_pose)
+            # print('init_pose')
+            # print(init_pose)
             '''icp 类型选择2*2=4'''
             startTime = time.time()
             if args.scan2submap:
@@ -301,8 +301,8 @@ def main():
 
             ICP_iteration_time[j] = time.time() - startTime
 
-            print('rel_LO_pose1')
-            print(rel_LO_pose)
+            # print('rel_LO_pose1')
+            # print(rel_LO_pose)
             if args.icp_version == 0:
                 ICP_iterations[j] = iterations
             elif args.icp_version == 1:
@@ -318,8 +318,8 @@ def main():
                     rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=rel_LO_pose,
                                                                 threshold=0.05)
 
-                print('rel_LO_pose2')
-                print(rel_LO_pose)
+                # print('rel_LO_pose2')
+                # print(rel_LO_pose)
 
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
