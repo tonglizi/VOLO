@@ -66,7 +66,7 @@ parser.add_argument('--icp-version', type=int, default=1,
                     help="options for ICP implementations: 0 is my own, 1 is from open3d ")
 parser.add_argument('--loop', type=bool, default=False,
                     help="enable loop closure detection or not")
-parser.add_argument('--fineMatching', type=bool, default=False,
+parser.add_argument('--fine-matching', type=bool, default=False,
                     help="enable fine matching (scan2map after scan2scan)")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -307,7 +307,7 @@ def main():
             elif args.icp_version == 1:
                 ICP_fitness[j] = fitness
             # 开始精匹配
-            if args.fineMatching:
+            if args.fine_matching:
                 submap = Map.getSubMap()
                 if args.icp_version == 0:
                     rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=rel_LO_pose,
