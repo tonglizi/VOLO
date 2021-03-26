@@ -55,18 +55,18 @@ parser.add_argument('--data_base_dir', type=str,
                     default='/your/path/.../data_odometry_velodyne/dataset/sequences')
 parser.add_argument('--sequence_idx', type=str, default='09')
 parser.add_argument('--save_gap', type=int, default=300)
-parser.add_argument('--mapping', type=bool, default=True, help="build real-time map")
+parser.add_argument('--mapping',  default='True',action="store_true", help="build real-time map")
 parser.add_argument('--vizmapping', type=bool, default=False, help="display the real-time map")
 parser.add_argument('--map-down-points', type=int, default=200, help="mapping density")
-parser.add_argument('--isKitti', type=bool, default=False,
+parser.add_argument('--isKitti',efault='False',action="store_true",
                     help="Only for KITTI dataset test, if not, then for mydataset")
-parser.add_argument('--scan2submap', type=bool, default=False,
+parser.add_argument('--scan2submap', default='False',action="store_true",
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
 parser.add_argument('--icp-version', type=int, default=1,
                     help="options for ICP implementations: 0 is my own, 1 is from open3d ")
-parser.add_argument('--loop', type=bool, default=False,
+parser.add_argument('--loop', default='False',action="store_true",
                     help="enable loop closure detection or not")
-parser.add_argument('--fine-matching', type=bool, default=False,
+parser.add_argument('--fine-matching', default='False',action="store_true",
                     help="enable fine matching (scan2map after scan2scan)")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -307,7 +307,8 @@ def main():
             elif args.icp_version == 1:
                 ICP_fitness[j] = fitness
             # 开始精匹配
-            if args.fine_matching:
+
+            if args.fine_matching==1:
                 submap = Map.getSubMap()
                 if args.icp_version == 0:
                     rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=rel_LO_pose,
