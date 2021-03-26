@@ -64,6 +64,10 @@ parser.add_argument('--scan2submap', type=bool, default=False,
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
 parser.add_argument('--icp-version', type=int, default=1,
                     help="options for ICP implementations: 0 is my own, 1 is from open3d ")
+parser.add_argument('--loop', type=bool, default=False,
+                    help="enable loop closure detection or not")
+parser.add_argument('--fineMatching', type=bool, default=True,
+                    help="enable fine matching (scan2map after scan2scan)")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -172,10 +176,11 @@ def main():
                                        num_frames=num_frames,
                                        seq_idx=args.sequence_idx,
                                        save_dir=save_dir)
-    '''Scan Context Manager (for loop detection) initialization'''
-    SCM = ScanContextManager(shape=[args.num_rings, args.num_sectors],
-                             num_candidates=args.num_candidates,
-                             threshold=args.loop_threshold)
+    if args.loop:
+        '''Scan Context Manager (for loop detection) initialization'''
+        SCM = ScanContextManager(shape=[args.num_rings, args.num_sectors],
+                                 num_candidates=args.num_candidates,
+                                 threshold=args.loop_threshold)
     '''Mapping initialzation'''
     if args.mapping is True:
         Map = MappingManager()
@@ -248,7 +253,8 @@ def main():
             # 初始化
             if j == 0:
                 last_pts = pointClouds[j]
-                SCM.addNode(j, last_pts)
+                if args.loop:
+                    SCM.addNode(j, last_pts)
                 if args.mapping is True:
                     Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=args.map_down_points,
                                   submap_points=args.num_icp_points)
@@ -263,8 +269,8 @@ def main():
             elif args.proposal == 2:
                 init_pose = rel_VO_pose
 
-            # print('init_pose')
-            # print(init_pose)
+            print('init_pose')
+            print(init_pose)
             '''icp 类型选择2*2=4'''
             startTime = time.time()
             if args.scan2submap:
@@ -294,18 +300,32 @@ def main():
 
             ICP_iteration_time[j] = time.time() - startTime
 
-            # print('rel_LO_pose')
-            # print(rel_LO_pose)
+            print('rel_LO_pose1')
+            print(rel_LO_pose)
             if args.icp_version == 0:
                 ICP_iterations[j] = iterations
             elif args.icp_version == 1:
                 ICP_fitness[j] = fitness
+            # 开始精匹配
+            if args.fineMatching:
+                submap = Map.getSubMap()
+                if args.icp_version == 0:
+                    rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=rel_LO_pose,
+                                                              tolerance=args.tolerance,
+                                                              max_iterations=50)
+                elif args.icp_version == 1:
+                    rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=rel_LO_pose, threshold=0.05)
+
+                print('rel_LO_pose2')
+                print(rel_LO_pose)
+
             ResultSaver.saveRelativePose(rel_LO_pose)
             '''更新变量'''
             last_pts = curr_pts
             last_rel_LO_pose = rel_LO_pose
-            '''Update loop detection nodes'''
-            SCM.addNode(j + 1, curr_pts)
+            if args.loop:
+                '''Update loop detection nodes'''
+                SCM.addNode(j + 1, curr_pts)
             '''Update the edges and nodes of pose graph'''
             PGM.curr_node_idx = j + 1
             PGM.curr_se3 = np.matmul(PGM.curr_se3, rel_LO_pose)
@@ -321,7 +341,7 @@ def main():
                               submap_points=args.num_icp_points)
 
             # loop detection and optimize the graph
-            if (PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
+            if (args.loop and PGM.curr_node_idx > 1 and PGM.curr_node_idx % args.try_gap_loop_detection == 0):
                 # 1/ loop detection
                 loop_idx, loop_dist, yaw_diff_deg = SCM.detectLoop()
                 if (loop_idx == None):  # NOT FOUND

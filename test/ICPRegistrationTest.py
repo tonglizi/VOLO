@@ -103,8 +103,8 @@ def refine_registration_myownicp(source, target, trans_init, tolerance, max_iter
 
 
 def main():
-    source_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000230.bin')
-    target_array = readBinScan('E:/data_odometry/dataset/sequences/09/velodyne/000229.bin')
+    source_array = readBinScan('E:/mydataset/sequences/20210325_144853/velodyne/0071.bin')
+    target_array = readBinScan('E:/mydataset/sequences/20210325_144853/velodyne/0070.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
@@ -142,8 +142,7 @@ def main():
 
     # ICP 精细匹配 point to Plane
     trans_init = np.identity(4)
-    trans_init[0, 3] = 0.5
-
+    trans_init[0, 3] = 0.1
 
     start = time.time()
     # source=source.voxel_down_sample(0.25)
@@ -159,7 +158,7 @@ def main():
 
 
     start = time.time()
-    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=50000)
+    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
     print("refine registration took %.3f sec.\n" % (time.time() - start))
     print(odo_result)
     draw_registration_result(source, target, odo_result)
