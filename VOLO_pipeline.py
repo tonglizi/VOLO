@@ -308,7 +308,6 @@ def main():
             elif args.icp_version == 1:
                 ICP_fitness[j] = fitness
             # 开始精匹配
-
             if args.fine_matching == 1:
                 submap = Map.getSubMap()
                 if args.icp_version == 0:

@@ -10,13 +10,13 @@ import copy
 import open3d as o3d
 
 
-def p2l_icp(source, target, trans_init, threshold,radius=4):
+def p2l_icp(source, target, trans_init, threshold,radius=4,max_iteration=100):
     source = array_to_o3d_pointcloud(source)
     target = array_to_o3d_pointcloud(target)
     source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=30))
     target.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=30))
     result_icp = refine_registration(source, target,
-                                     threshold, trans_init)
+                                     threshold, trans_init,max_iteration=max_iteration)
     return result_icp.transformation, result_icp.fitness, result_icp.inlier_rmse
 
 
@@ -131,7 +131,7 @@ def execute_fast_global_registration(source_down, target_down, source_fpfh,
     return result
 
 
-def refine_registration(source, target, threshold, trans_init):
+def refine_registration(source, target, threshold, trans_init,max_iteration=2000):
     distance_threshold = threshold * 0.5
     # print(":: Point-to-plane ICP registration is applied on original point")
     # print("   clouds to refine the alignment. This time we use a strict")
@@ -141,5 +141,5 @@ def refine_registration(source, target, threshold, trans_init):
     result = o3d.pipelines.registration.registration_icp(
         source, target, distance_threshold, trans_init,
         p2l,
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000))
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=max_iteration))
     return result
