@@ -89,7 +89,7 @@ def refine_registration(source, target, voxel_size, trans_init):
     result = o3d.pipelines.registration.registration_icp(
         source, target, distance_threshold, trans_init,
         p2l,
-        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000))
+        o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=50))
     return result
 
 
@@ -142,7 +142,7 @@ def main():
 
     # ICP 精细匹配 point to Plane
     trans_init = np.identity(4)
-    trans_init[0, 3] = 0.1
+    trans_init[0, 3] = 0.07
 
     start = time.time()
     # source=source.voxel_down_sample(0.25)

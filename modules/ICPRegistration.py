@@ -10,7 +10,7 @@ import copy
 import open3d as o3d
 
 
-def p2l_icp(source, target, trans_init, threshold,radius=4,max_iteration=100):
+def p2l_icp(source, target, trans_init, threshold,radius=4,max_iteration=50):
     source = array_to_o3d_pointcloud(source)
     target = array_to_o3d_pointcloud(target)
     source.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=30))
