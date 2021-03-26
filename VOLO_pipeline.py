@@ -55,18 +55,18 @@ parser.add_argument('--data_base_dir', type=str,
                     default='/your/path/.../data_odometry_velodyne/dataset/sequences')
 parser.add_argument('--sequence_idx', type=str, default='09')
 parser.add_argument('--save_gap', type=int, default=300)
-parser.add_argument('--mapping',  default='True',action="store_true", help="build real-time map")
+parser.add_argument('--mapping', type=bool, default=True, help="build real-time map")
 parser.add_argument('--vizmapping', type=bool, default=False, help="display the real-time map")
 parser.add_argument('--map-down-points', type=int, default=200, help="mapping density")
-parser.add_argument('--isKitti',default='False',action="store_true",
+parser.add_argument('--isKitti', action="store_true",
                     help="Only for KITTI dataset test, if not, then for mydataset")
-parser.add_argument('--scan2submap', default='False',action="store_true",
+parser.add_argument('--scan2submap', action="store_true",
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
 parser.add_argument('--icp-version', type=int, default=1,
                     help="options for ICP implementations: 0 is my own, 1 is from open3d ")
-parser.add_argument('--loop', default='False',action="store_true",
+parser.add_argument('--loop', action="store_true",
                     help="enable loop closure detection or not")
-parser.add_argument('--fine-matching', default='False',action="store_true",
+parser.add_argument('--fine-matching', action="store_true",
                     help="enable fine matching (scan2map after scan2scan)")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -230,9 +230,10 @@ def main():
                 if j == 0:
                     scale_factor = 7
                 else:
-                    scale_factor = math.sqrt(np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
+                    scale_factor = math.sqrt(
+                        np.sum(last_rel_LO_pose[:3, -1] ** 2) / np.sum(last_rel_VO_pose[:3, -1] ** 2))
             else:
-                scale_factor=7
+                scale_factor = 7
             # version2.0 固定模型的尺度因子
             # if args.isKitti:
             #     scale_factor = 35
@@ -308,14 +309,15 @@ def main():
                 ICP_fitness[j] = fitness
             # 开始精匹配
 
-            if args.fine_matching==1:
+            if args.fine_matching == 1:
                 submap = Map.getSubMap()
                 if args.icp_version == 0:
                     rel_LO_pose, distacnces, iterations = icp(curr_pts, submap, init_pose=rel_LO_pose,
                                                               tolerance=args.tolerance,
                                                               max_iterations=50)
                 elif args.icp_version == 1:
-                    rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=rel_LO_pose, threshold=0.05)
+                    rel_LO_pose, fitness, inlier_rmse = p2l_icp(curr_pts, submap, trans_init=rel_LO_pose,
+                                                                threshold=0.05)
 
                 print('rel_LO_pose2')
                 print(rel_LO_pose)
