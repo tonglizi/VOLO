@@ -58,7 +58,7 @@ parser.add_argument('--save_gap', type=int, default=300)
 parser.add_argument('--mapping',  default='True',action="store_true", help="build real-time map")
 parser.add_argument('--vizmapping', type=bool, default=False, help="display the real-time map")
 parser.add_argument('--map-down-points', type=int, default=200, help="mapping density")
-parser.add_argument('--isKitti',efault='False',action="store_true",
+parser.add_argument('--isKitti',default='False',action="store_true",
                     help="Only for KITTI dataset test, if not, then for mydataset")
 parser.add_argument('--scan2submap', default='False',action="store_true",
                     help="ICP matching method: scan to scan (off); scan to sub map (on) ")
