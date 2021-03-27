@@ -68,6 +68,8 @@ parser.add_argument('--loop', action="store_true",
                     help="enable loop closure detection or not")
 parser.add_argument('--fine-matching', action="store_true",
                     help="enable fine matching (scan2map after scan2scan)")
+parser.add_argument('--k', type=int,default=5,
+                    help="number of pointclouds of submap")
 # CPU or GPU computing
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -183,7 +185,7 @@ def main():
                                  threshold=args.loop_threshold)
     '''Mapping initialzation'''
     if args.mapping is True:
-        Map = MappingManager(k=5)
+        Map = MappingManager(k=args.k)
 
     # for save the result as a video
     fig_idx = 1
