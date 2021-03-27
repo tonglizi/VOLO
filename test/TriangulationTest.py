@@ -15,7 +15,7 @@ def array_to_o3d_pointcloud(pointcloud_arr):
     return pointcloud
 
 def main():
-    pcd = o3d.io.read_point_cloud('D:\/Projects\/VOLO\/result\/mydataset_v3\/20210315_174658\/net_f89932606d8e2fb945ffd842b90ec631/pts@10000_prop@2_tolerance@0.0005_scm@ring_thresh@0.0.pcd')
+    pcd = o3d.io.read_point_cloud('C:/Users/93121/Desktop/5.pcd')
     # pcd = readBinScan('E:/mydataset/sequences/20210302_164405/velodyne/0000.bin')
     # pcd = array_to_o3d_pointcloud(pcd)
     # pcd = pcd.voxel_down_sample(voxel_size=0.05)
@@ -24,7 +24,7 @@ def main():
     # estimate radius for rolling ball
     distances = pcd.compute_nearest_neighbor_distance()
     avg_dist = np.mean(distances)
-    radius = 1.5 * avg_dist
+    radius = 1 * avg_dist
 
     mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
         pcd,

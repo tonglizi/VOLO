@@ -183,7 +183,7 @@ def main():
                                  threshold=args.loop_threshold)
     '''Mapping initialzation'''
     if args.mapping is True:
-        Map = MappingManager()
+        Map = MappingManager(k=5)
 
     # for save the result as a video
     fig_idx = 1
