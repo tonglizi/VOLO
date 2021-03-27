@@ -257,7 +257,8 @@ def main():
             if j == 0:
                 last_pts = pointClouds[j]
                 if args.loop:
-                    SCM.addNode(j, last_pts)
+                    down_points=random_sampling(last_pts,num_points=args.num_icp_points)
+                    SCM.addNode(j, down_points)
                 if args.mapping is True:
                     Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=args.map_down_points,
                                   submap_points=args.num_icp_points)
@@ -329,7 +330,8 @@ def main():
             last_rel_LO_pose = rel_LO_pose
             if args.loop:
                 '''Update loop detection nodes'''
-                SCM.addNode(j + 1, curr_pts)
+                down_points = random_sampling(curr_pts, num_points=args.num_icp_points)
+                SCM.addNode(j + 1, down_points)
             '''Update the edges and nodes of pose graph'''
             PGM.curr_node_idx = j + 1
             PGM.curr_se3 = np.matmul(PGM.curr_se3, rel_LO_pose)
