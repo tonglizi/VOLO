@@ -354,8 +354,13 @@ def main():
                     print("Loop event detected: ", PGM.curr_node_idx, loop_idx, loop_dist)
                     # 2-1/ add the loop factor
                     loop_scan_down_pts = SCM.getPtcloud(loop_idx)
-                    loop_transform, _, _ = icp(curr_pts, loop_scan_down_pts,
-                                               init_pose=yawdeg2se3(yaw_diff_deg), max_iterations=20)
+                    if args.icp_version == 0:
+                        loop_transform, _, _ = icp(curr_pts, loop_scan_down_pts, init_pose=yawdeg2se3(yaw_diff_deg),
+                                                                  tolerance=args.tolerance,
+                                                                  max_iterations=50)
+                    elif args.icp_version == 1:
+                        loop_transform, _, _ = p2l_icp(curr_pts, loop_scan_down_pts, trans_init=yawdeg2se3(yaw_diff_deg),
+                                                                    threshold=0.05)
                     PGM.addLoopFactor(loop_transform, loop_idx)
 
                     # 2-2/ graph optimization
