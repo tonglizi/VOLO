@@ -402,6 +402,7 @@ def main():
             elif args.icp_version == 1:
                 np.savetxt(save_dir / 'fitness_' + suffix + '.txt', ICP_fitness)
             np.savetxt(save_dir / 'iteration_time_' + suffix + '.txt', ICP_iteration_time)
+            np.savetxt(save_dir / 'VO_processing_time.txt', VO_processing_time)
             if args.isKitti:
                 np.savetxt(save_dir / 'est_poses_' + suffix + '.txt'.format(args.sequence_idx), est_poses)
 
