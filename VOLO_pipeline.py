@@ -338,6 +338,7 @@ def main():
             PGM.addOdometryFactor(rel_LO_pose)
             PGM.prev_node_idx = PGM.curr_node_idx
 
+            #TODO 位姿记录下的是未经过回环检测的位姿，回环优化后的整体位姿通过是PGM维护的
             est_pose = Transform_matrix_L2C @ PGM.curr_se3 @ np.linalg.inv(Transform_matrix_L2C)
             est_poses[j + 1] = est_pose[:3, :].reshape(12)
 
