@@ -68,18 +68,11 @@ parser.add_argument('--loop', action="store_true",
                     help="enable loop closure detection or not")
 parser.add_argument('--fine-matching', action="store_true",
                     help="enable fine matching (scan2map after scan2scan)")
-parser.add_argument('--k', type=int,default=5,
+parser.add_argument('--k', type=int, default=5,
                     help="number of pointclouds of submap")
 parser.add_argument('--cpu', action="store_true",
                     help="enable cpu computing for torch")
 args = parser.parse_args()
-
-# CPU or GPU computing
-if args.cpu:
-    device=torch.device("cpu")
-else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 if args.scm_type == "ring":
     from modules.RingScanContextManager import ScanContextManager
@@ -97,8 +90,14 @@ def MD5_ID(pretrained_posenet):
 
 @torch.no_grad()
 def main():
+    # CPU or GPU computing
+    if args.cpu:
+        device = torch.device("cpu")
+    else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     '''加载训练后的模型'''
-    weights = torch.load(args.pretrained_posenet)
+    weights = torch.load(args.pretrained_posenet, map_location=device)
     seq_length = int(weights['state_dict']['conv1.0.weight'].size(1) / 3)
     pose_net = PoseExpNet(nb_ref_imgs=seq_length - 1, output_exp=False).to(device)
     pose_net.load_state_dict(weights['state_dict'], strict=False)
@@ -260,7 +259,7 @@ def main():
             if j == 0:
                 last_pts = pointClouds[j]
                 if args.loop:
-                    down_points=random_sampling(last_pts,num_points=args.num_icp_points)
+                    down_points = random_sampling(last_pts, num_points=args.num_icp_points)
                     SCM.addNode(j, down_points)
                 if args.mapping is True:
                     Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=last_pts, down_points=args.map_down_points,
@@ -358,11 +357,12 @@ def main():
                     loop_scan_down_pts = SCM.getPtcloud(loop_idx)
                     if args.icp_version == 0:
                         loop_transform, _, _ = icp(curr_pts, loop_scan_down_pts, init_pose=yawdeg2se3(yaw_diff_deg),
-                                                                  tolerance=args.tolerance,
-                                                                  max_iterations=50)
+                                                   tolerance=args.tolerance,
+                                                   max_iterations=50)
                     elif args.icp_version == 1:
-                        loop_transform, _, _ = p2l_icp(curr_pts, loop_scan_down_pts, trans_init=yawdeg2se3(yaw_diff_deg),
-                                                                    threshold=0.05)
+                        loop_transform, _, _ = p2l_icp(curr_pts, loop_scan_down_pts,
+                                                       trans_init=yawdeg2se3(yaw_diff_deg),
+                                                       threshold=0.05)
                     PGM.addLoopFactor(loop_transform, loop_idx)
 
                     # 2-2/ graph optimization
@@ -405,8 +405,8 @@ def main():
             np.savetxt(save_dir / 'VO_processing_time.txt', VO_processing_time)
             if args.isKitti:
                 # 位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
-                est_poses_file='est_poses_' + suffix + '.txt'
-                ResultSaver.saveFinalPoseGraphResult(filename=est_poses_file,transform=Transform_matrix_L2C)
+                est_poses_file = 'est_poses_' + suffix + '.txt'
+                ResultSaver.saveFinalPoseGraphResult(filename=est_poses_file, transform=Transform_matrix_L2C)
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)
