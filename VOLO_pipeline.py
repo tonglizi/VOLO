@@ -144,9 +144,6 @@ def main():
     abs_VO_poses = np.zeros((num_poses, 12))
     abs_VO_poses[0] = np.identity(4)[:3, :].reshape(12)
     abs_VO_pose = np.identity(4)
-    # 位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
-    est_poses = np.zeros((num_poses, 12))
-    est_poses[0] = np.identity(4)[:3, :].reshape(12)
     '''帧间位姿列表初始化'''
     # 对齐到雷达坐标系，VO模型输出的带有尺度的帧间位姿
     rel_VO_poses = np.zeros((num_poses - 1, 12))
@@ -338,10 +335,6 @@ def main():
             PGM.addOdometryFactor(rel_LO_pose)
             PGM.prev_node_idx = PGM.curr_node_idx
 
-            #TODO 位姿记录下的是未经过回环检测的位姿，回环优化后的整体位姿通过是PGM维护的
-            est_pose = Transform_matrix_L2C @ PGM.curr_se3 @ np.linalg.inv(Transform_matrix_L2C)
-            est_poses[j + 1] = est_pose[:3, :].reshape(12)
-
             # 建图更新
             if args.mapping is True:
                 Map.updateMap(curr_se3=PGM.curr_se3, curr_local_ptcloud=curr_pts, down_points=args.map_down_points,
@@ -405,7 +398,9 @@ def main():
             np.savetxt(save_dir / 'iteration_time_' + suffix + '.txt', ICP_iteration_time)
             np.savetxt(save_dir / 'VO_processing_time.txt', VO_processing_time)
             if args.isKitti:
-                np.savetxt(save_dir / 'est_poses_' + suffix + '.txt'.format(args.sequence_idx), est_poses)
+                # 位姿估计值，对齐到相机坐标系下，和真值直接比较（仅适用于有相机坐标系下的真值）
+                est_poses_file='est_poses_' + suffix + '.txt'
+                ResultSaver.saveFinalPoseGraphResult(filename=est_poses_file,transform=Transform_matrix_L2C)
 
         # VO输出位姿的精度指标
         mean_errors = errors.mean(0)

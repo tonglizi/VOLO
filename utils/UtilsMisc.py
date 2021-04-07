@@ -123,9 +123,17 @@ class PoseGraphResultSaver:
         plt.draw()
         plt.pause(0.01)  # is necessary for the plot to update for some reason
 
-    def saveFinalPoseGraphResult(self, filename):
+    def saveFinalPoseGraphResult(self, filename,transform=None):
         filename = os.path.join(self.save_dir, filename)
-        np.savetxt(filename, self.pose_list[:, :12])
+        if transform is not None:
+            transformed_pose_list=np.zeros(len(self.pose_list),12)
+            for i in range(len(self.pose_list)):
+                pose_mat=np.reshape(self.pose_list[i,:],(4,4))
+                pose = transform @ pose_mat @ np.linalg.inv(transform)
+                transformed_pose_list[i] = pose[:3, :].reshape(12)
+            np.savetxt(filename,transformed_pose_list)
+        else:
+            np.savetxt(filename, self.pose_list[:, :12])
 
     def saveRelativePosesResult(self, filename):
         filename = os.path.join(self.save_dir, filename)
