@@ -8,17 +8,18 @@ sys.path.append('..')
 import argparse
 import os
 from tqdm import tqdm
+import numpy as np
 
-from modules.ScanContext2Manager import *
+from modules.ScanContext2Manager import ScanContextManager
 import utils.UtilsPointcloud as Ptutils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_dir", type=str, default='E:/data_odometry/dataset/sequences')
-parser.add_argument("--sequence_idx", type=str, default='00')
+parser.add_argument("--sequence_idx", type=str, default='08')
 parser.add_argument("--num_rings", type=int, default=20)
 parser.add_argument("--num_sectors", type=int, default=60)
 parser.add_argument("--num_candidates", type=int, default=10)
-parser.add_argument("--loop_threshold", type=float, default=0.11)
+parser.add_argument("--loop_threshold", type=float, default=0.2)
 args = parser.parse_args()
 
 

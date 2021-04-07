@@ -195,7 +195,7 @@ class ScanContextManager:
         # 归一化,sc存的是高度值，exp存的是深度值,需要归一化处理
         #sc = 4 * sc / np.max(sc)
         exp = 4 * exp / np.max(exp)
-        desp = exp #np.concatenate((sc, exp), axis=0)
+        desp = sc #np.concatenate((sc, exp), axis=0)
         # from matplotlib import pyplot as plt
         # plt.imshow(desp)
         key = desp2key(desp)
