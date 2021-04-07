@@ -70,17 +70,23 @@ parser.add_argument('--fine-matching', action="store_true",
                     help="enable fine matching (scan2map after scan2scan)")
 parser.add_argument('--k', type=int,default=5,
                     help="number of pointclouds of submap")
-# CPU or GPU computing
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
+parser.add_argument('--cpu', action="store_true",
+                    help="enable cpu computing for torch")
 args = parser.parse_args()
+
+# CPU or GPU computing
+if args.cpu:
+    device=torch.device("cpu")
+else:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
 if args.scm_type == "ring":
-    from modules.RingScanContextManager import *
+    from modules.RingScanContextManager import ScanContextManager
 elif args.scm_type == "vertical":
-    from modules.VerticalScanContextManager import *
+    from modules.VerticalScanContextManager import ScanContextManager
 elif args.scm_type == "combined":
-    from modules.CombinedScanContextManager import *
+    from modules.CombinedScanContextManager import ScanContextManager
 
 
 def MD5_ID(pretrained_posenet):
