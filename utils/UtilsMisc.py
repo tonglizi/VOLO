@@ -126,7 +126,7 @@ class PoseGraphResultSaver:
     def saveFinalPoseGraphResult(self, filename,transform=None):
         filename = os.path.join(self.save_dir, filename)
         if transform is not None:
-            transformed_pose_list=np.zeros(len(self.pose_list),12)
+            transformed_pose_list=np.zeros((len(self.pose_list),12))
             for i in range(len(self.pose_list)):
                 pose_mat=np.reshape(self.pose_list[i,:],(4,4))
                 pose = transform @ pose_mat @ np.linalg.inv(transform)
