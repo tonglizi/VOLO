@@ -8,13 +8,44 @@
 2. myownicp对预估的敏感性相比之下不够高，可能会出现好的预估也不能导向非常好的jing 匹配结果，但是也有可能较差的预估却会得到一个好的结果
 3. 在转弯幅度较大的阶段，myownicp的相对鲁棒想要好，但是小转弯时，open3d icp鲁棒性更好
 '''
-
+import math
 import time
 
 from modules.ICPRegistration import *
 from utils.UtilsPointcloud import readBinScan, random_sampling
 import numpy as np
 from modules.ICP import icp
+
+def eulerAnglesToRotationMatrix(theta):
+    R_x = np.array([[1, 0, 0],
+                    [0, math.cos(theta[0]), -math.sin(theta[0])],
+                    [0, math.sin(theta[0]), math.cos(theta[0])]
+                    ])
+
+    R_y = np.array([[math.cos(theta[1]), 0, math.sin(theta[1])],
+                    [0, 1, 0],
+                    [-math.sin(theta[1]), 0, math.cos(theta[1])]
+                    ])
+
+    R_z = np.array([[math.cos(theta[2]), -math.sin(theta[2]), 0],
+                    [math.sin(theta[2]), math.cos(theta[2]), 0],
+                    [0, 0, 1]
+                    ])
+
+    R = np.dot(R_z, np.dot(R_y, R_x))
+
+    return R
+
+
+def yawdeg2so3(yaw_deg):
+    yaw_rad = np.deg2rad(yaw_deg)
+    return eulerAnglesToRotationMatrix([0, 0, yaw_rad])
+
+
+def yawdeg2se3(yaw_deg):
+    se3 = np.eye(4)
+    se3[:3, :3] = yawdeg2so3(yaw_deg)
+    return se3
 
 
 def array_to_o3d_pointcloud(pointcloud_arr, robot_height=0.64, isIndoor=False, room_height=2.85):
@@ -103,8 +134,8 @@ def refine_registration_myownicp(source, target, trans_init, tolerance, max_iter
 
 
 def main():
-    source_array = readBinScan('E:/mydataset/sequences/20210325_144853/velodyne/0071.bin')
-    target_array = readBinScan('E:/mydataset/sequences/20210325_144853/velodyne/0070.bin')
+    source_array = readBinScan('E:/data_odometry/dataset/sequences/08/velodyne/001490.bin')
+    target_array = readBinScan('E:/data_odometry/dataset/sequences/08/velodyne/000722.bin')
 
     # tf,_,_,_=icp(source,target,None)
     # print(tf)
@@ -141,8 +172,8 @@ def main():
     # draw_registration_result(source_down, target_down, result_fast.transformation)
 
     # ICP 精细匹配 point to Plane
-    trans_init = np.identity(4)
-    trans_init[0, 3] = 0.07
+    trans_init = yawdeg2se3(yaw_deg=90)
+    trans_init[0, 3] = 0.0
 
     start = time.time()
     # source=source.voxel_down_sample(0.25)
@@ -158,7 +189,7 @@ def main():
 
 
     start = time.time()
-    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=10000)
+    odo_result=refine_registration_myownicp(source_array,target_array,trans_init,tolerance=0.0005,max_iteration=50,num_icp_points=7000)
     print("refine registration took %.3f sec.\n" % (time.time() - start))
     print(odo_result)
     draw_registration_result(source, target, odo_result)

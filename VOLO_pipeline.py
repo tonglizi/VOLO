@@ -364,6 +364,10 @@ def main():
                                                        trans_init=yawdeg2se3(yaw_diff_deg),
                                                        threshold=0.05)
                     PGM.addLoopFactor(loop_transform, loop_idx)
+                    print("trans_init:")
+                    print(yawdeg2se3(yaw_diff_deg))
+                    print("loop_transform:")
+                    print(loop_transform)
 
                     # 2-2/ graph optimization
                     PGM.optimizePoseGraph()
