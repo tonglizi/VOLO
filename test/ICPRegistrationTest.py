@@ -172,7 +172,7 @@ def main():
     # draw_registration_result(source_down, target_down, result_fast.transformation)
 
     # ICP 精细匹配 point to Plane
-    trans_init = yawdeg2se3(yaw_deg=90)
+    trans_init = yawdeg2se3(yaw_deg=180)
     trans_init[0, 3] = 0.0
 
     start = time.time()

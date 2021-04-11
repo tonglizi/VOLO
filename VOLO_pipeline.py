@@ -449,6 +449,16 @@ def main():
         print("mean \t {:10.4f}".format(mean_iterations))
         print("std \t {:10.4f}".format(std_iterations))
 
+        # VO时间
+        mean_vo_time = VO_processing_time.mean()
+        std_vo_time = VO_processing_time.std()
+        _names = ['iter_time']
+        print('')
+        print("VO时间：单位/s")
+        print("\t {:>10}".format(*_names))
+        print("mean \t {:10.4f}".format(mean_vo_time))
+        print("std \t {:10.4f}".format(std_vo_time))
+
         # 迭代时间
         mean_iter_time = ICP_iteration_time.mean()
         std_iter_time = ICP_iteration_time.std()
