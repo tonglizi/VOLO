@@ -139,3 +139,6 @@ result/
 /result/
 *.pcd
 *.ply
+/UI.py
+/calculator.py
+/calculator.ui
